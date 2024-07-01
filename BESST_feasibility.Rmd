@@ -1,0 +1,167 @@
+---
+title: "BESST_feasibility"
+author: "Mark Nwakamma"
+date: "7/1/2024"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/Users/marknwakamma/Downloads/")
+
+library(rlang)
+library(patchwork)
+library(ggplot2)
+library(dplyr)
+library(psych)
+library(nlme)
+library(readxl)
+library(tidyr)
+
+techs <- read_excel("techs_data_2024-06-27.xlsx")
+
+```
+
+## Figure 1 and 2 data wrangling
+```{r cars}
+# heart rate from cycle test
+techs_fitness_hr <- techs %>%
+  dplyr::select(name, baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
+
+# change in symptoms from cycle test
+techs_fitness_symp <- techs %>%
+  dplyr::select(sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
+
+symp_baseline <- c(0,0,0,0,0,0,0,0,0,0)
+
+techs_fitness_symp <- techs_fitness_symp %>% 
+            mutate(symp_baseline = symp_baseline)
+
+# RPE from cycle test
+techs_fitness_rpe <- techs %>%
+  dplyr::select(borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+
+# Combine heart rate and change in symptoms df
+F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
+
+
+
+
+# Make combined heart rate data long for plotting
+F1_techs_hr_long <- F1_techs %>%
+  gather(key = "time_point", value = "heart_rate", baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
+
+time_levels <- c("baseline_hr","hr_2", "hr_4", "hr_6", "hr_7", "hr_8", "hr_9", "hr_10", "hr_11", "hr_12")
+
+# Convert `time_point` to a factor with specified levels
+F1_techs_hr_long <- F1_techs_hr_long %>%
+  mutate(time_point = factor(time_point, levels = time_levels))
+
+# Make combined symptoms change data long for plotting
+F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", symp_baseline, sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
+
+symp_levels <- c("symp_baseline","sympincrease_2","sympincrease_4","sympincrease_6","sympincrease_2_2","sympincrease_2_4","sympincrease_2_6","sympincrease_2_8","sympincrease_2_10","sympincrease_2_12")
+
+# Convert `time_point_symp` to a factor with specified levels
+F1_techs_symp_long <- F1_techs_symp_long %>%
+  mutate(time_point = factor(time_point_sym, levels = symp_levels))
+
+
+F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+
+rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10","borg_11","borg_12")
+
+# Convert `time_point_rpe` to a factor with specified levels
+F1_techs_rpe_long <- F1_techs_rpe_long %>%
+  mutate(time_point = factor(time_point_rpe, levels = rpe_levels))
+
+# Combine all 3 long datasets
+F1_techs <- bind_cols(F1_techs_hr_long,F1_techs_symp_long,F1_techs_rpe_long)
+
+# Create a subset of only variables you will plot
+F1_techs <- F1_techs %>% 
+  dplyr::select(name...1, time_point...22, heart_rate, symp_change, rpe)
+
+F1_techs <- F1_techs %>% 
+  dplyr::rename(participant = name...1, timepoint= time_point...22)
+
+```
+
+## Plots
+```{r}
+
+#plot each participant seperately
+ggplot(F1_techs, aes(x = heart_rate, y = rpe, group = participant)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ participant, nrow = 4) +  # Assuming 12 participants, arrange them in 3 rows
+  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+
+#plot all participants
+primary_plot <- ggplot(F1_techs, aes(x = timepoint, y = heart_rate, color = participant)) +
+  geom_line(aes(group = participant), na.rm = TRUE) +
+  geom_point(data = F1_techs, aes(x = timepoint, y = heart_rate, color = participant)) + theme() +
+  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+
+primary_plot
+
+secondary_plot <- ggplot(F1_techs, aes(x = timepoint, y = symp_change, color = participant)) +
+  geom_line(aes(group = participant), na.rm = TRUE) +
+  geom_point()  +
+  scale_y_continuous(name = "Change in Symptoms", position = "right") +
+  theme_minimal() +
+  theme(
+    axis.title.y.left = element_blank(), # Hide the primary axis title on the secondary plot
+    axis.text.y.left = element_blank(), # Hide the primary axis labels on the secondary plot
+    axis.ticks.y.left = element_blank(), # Hide the primary axis ticks on the secondary plot
+    axis.text.x = element_blank(), # Hide x-axis text
+    axis.ticks.x = element_blank(), # Hide x-axis ticks
+    panel.grid.major = element_blank(), # Hide major grid lines
+    panel.grid.minor = element_blank(), # Hide minor grid lines
+    plot.background = element_rect(fill = NA, color = NA), # Make background transparent
+
+  )
+
+secondary_plot
+
+primary_plot + secondary_plot
+
+```
+
+
+# Figure 3 data wrangling
+```{r}
+techs$baseline_hr <- rowMeans(techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6","baseline_hr_int1_d5_d7","baseline_hr_int1_d5_d8","baseline_hr_int1_d5_d9","baseline_hr_int1_d5_d10","baseline_hr_int1_d5_d11","baseline_hr_int1_d5_d12")], na.rm=TRUE)
+
+
+techs$baseline_hr_perc <- rowMeans(techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6","hr_max_baseline_int1_d5_d7","hr_max_baseline_int1_d5_d8","hr_max_baseline_int1_d5_d9","hr_max_baseline_int1_d5_d10","hr_max_baseline_int1_d5_d11","hr_max_baseline_int1_d5_d12")], na.rm=TRUE)
+
+
+techs$min05_hr <- rowMeans(techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9","hr_1_int1_d5_d10","hr_1_int1_d5_d11","hr_1_int1_d5_d12")], na.rm=TRUE)
+
+techs$min05_hr_perc <- rowMeans(techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6","hr_max_1_int1_d5_d7","hr_max_1_int1_d5_d8","hr_max_1_int1_d5_d9","hr_max_1_int1_d5_d10","hr_max_1_int1_d5_d11","hr_max_1_int1_d5_d12")], na.rm=TRUE)
+
+techs$min10_hr <- rowMeans(techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9","hr_2_int1_d5_d10","hr_2_int1_d5_d11","hr_2_int1_d5_d12")], na.rm=TRUE)
+
+techs$min10_hr_perc <- rowMeans(techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6","hr_max_2_int1_d5_d7","hr_max_2_int1_d5_d8","hr_max_2_int1_d5_d9","hr_max_2_int1_d5_d10","hr_max_2_int1_d5_d11","hr_max_2_int1_d5_d12")], na.rm=TRUE)
+
+techs$min15_hr <- rowMeans(techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6","hr_3_int1_d5_d7","hr_3_int1_d5_d8","hr_3_int1_d5_d9","hr_3_int1_d5_d10","hr_3_int1_d5_d11","hr_3_int1_d5_d12")], na.rm=TRUE)
+
+techs$min15_hr_perc <- rowMeans(techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6","hr_max_3_int1_d5_d7","hr_max_3_int1_d5_d8","hr_max_3_int1_d5_d9","hr_max_3_int1_d5_d10","hr_max_3_int1_d5_d11","hr_max_3_int1_d5_d12")], na.rm=TRUE)
+
+techs$min20_hr <- rowMeans(techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6","hr_4_int1_d5_d7","hr_4_int1_d5_d8","hr_4_int1_d5_d9","hr_4_int1_d5_d10","hr_4_int1_d5_d11","hr_4_int1_d5_d12")], na.rm=TRUE)
+
+techs$min20_hr_perc <- rowMeans(techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6","hr_max_4_int1_d5_d7","hr_max_4_int1_d5_d8","hr_max_4_int1_d5_d9","hr_max_4_int1_d5_d10","hr_max_4_int1_d5_d11","hr_max_4_int1_d5_d12")], na.rm=TRUE)
+
+techs$min25_hr <- rowMeans(techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9","hr_5_int1_d5_d10","hr_5_int1_d5_d11","hr_5_int1_d5_d12")], na.rm=TRUE)
+
+techs$min25_hr_perc <- rowMeans(techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6","hr_max_5_int1_d5_d7","hr_max_5_int1_d5_d8","hr_max_5_int1_d5_d9","hr_max_5_int1_d5_d10","hr_max_5_int1_d5_d11","hr_max_5_int1_d5_d12")], na.rm=TRUE)
+
+techs$min30_hr <- rowMeans(techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9","hr_6_int1_d5_d10","hr_6_int1_d5_d11","hr_6_int1_d5_d12")], na.rm=TRUE)
+
+
+techs$min30_hr_perc <- rowMeans(techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6","hr_max_6_int1_d5_d7","hr_max_6_int1_d5_d8","hr_max_6_int1_d5_d9","hr_max_6_int1_d5_d10","hr_max_6_int1_d5_d11","hr_max_6_int1_d5_d12")], na.rm=TRUE)
+
+
+```
+
