@@ -43,10 +43,9 @@ techs_fitness_rpe <- techs %>%
 
 # Combine heart rate and change in symptoms df
 F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
+```
 
-
-
-
+```{r}
 # Make combined heart rate data long for plotting
 F1_techs_hr_long <- F1_techs %>%
   gather(key = "time_point", value = "heart_rate", baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
@@ -56,7 +55,9 @@ time_levels <- c("baseline_hr","hr_2", "hr_4", "hr_6", "hr_7", "hr_8", "hr_9", "
 # Convert `time_point` to a factor with specified levels
 F1_techs_hr_long <- F1_techs_hr_long %>%
   mutate(time_point = factor(time_point, levels = time_levels))
+```
 
+```{r}
 # Make combined symptoms change data long for plotting
 F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", symp_baseline, sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
 
@@ -65,8 +66,9 @@ symp_levels <- c("symp_baseline","sympincrease_2","sympincrease_4","sympincrease
 # Convert `time_point_symp` to a factor with specified levels
 F1_techs_symp_long <- F1_techs_symp_long %>%
   mutate(time_point = factor(time_point_sym, levels = symp_levels))
+```
 
-
+```{r}
 F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
 
 rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10","borg_11","borg_12")
@@ -74,7 +76,9 @@ rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","bo
 # Convert `time_point_rpe` to a factor with specified levels
 F1_techs_rpe_long <- F1_techs_rpe_long %>%
   mutate(time_point = factor(time_point_rpe, levels = rpe_levels))
+```
 
+```{r}
 # Combine all 3 long datasets
 F1_techs <- bind_cols(F1_techs_hr_long,F1_techs_symp_long,F1_techs_rpe_long)
 
@@ -83,27 +87,90 @@ F1_techs <- F1_techs %>%
   dplyr::select(name...1, time_point...22, heart_rate, symp_change, rpe)
 
 F1_techs <- F1_techs %>% 
-  dplyr::rename(participant = name...1, timepoint= time_point...22)
-
+  dplyr::rename(participant = name...1, timepoint = time_point...22)
 ```
+
+```{r}
+fit_baseline <- mean(techs$baseline_hr,na.rm=TRUE)
+fit_hrmax_baseline <- mean(techs$hr_max_baseline,na.rm=TRUE)
+fit_symp_baseline <- mean(techs$sympincrease_baseline, na.rm=TRUE)
+fit_hr2 <- mean(techs$hr_2,na.rm=TRUE)
+fit_hrmax2 <- mean(techs$hr_max_2,na.rm=TRUE)
+fit_symp2 <- mean(techs$sympincrease_2, na.rm=TRUE)
+fit_hr4 <- mean(techs$hr_4,na.rm=TRUE)
+fit_hrmax4 <- mean(techs$hr_max_4,na.rm=TRUE)
+fit_symp4 <- mean(techs$sympincrease_4, na.rm=TRUE)
+fit_hr5 <- mean(techs$hr_5,na.rm=TRUE)
+
+fit_hr6 <- mean(techs$hr_6,na.rm=TRUE)
+fit_hrmax6 <- mean(techs$hr_max_6,na.rm=TRUE)
+fit_symp6 <- mean(techs$sympincrease_6, na.rm=TRUE)
+fit_hr8 <- mean(techs$hr_7,na.rm=TRUE)
+fit_hrmax8 <- mean(techs$hr_max_7,na.rm=TRUE)
+fit_symp8 <- mean(techs$sympincrease_2_2, na.rm=TRUE)
+fit_hr10 <- mean(techs$hr_8,na.rm=TRUE)
+fit_hrmax10 <- mean(techs$hr_max_8,na.rm=TRUE)
+fit_symp10 <- mean(techs$sympincrease_2_4, na.rm=TRUE)
+fit_hr12 <- mean(techs$hr_9,na.rm=TRUE)
+fit_hrmax12 <- mean(techs$hr_max_9,na.rm=TRUE)
+fit_symp12 <- mean(techs$sympincrease_2_6, na.rm=TRUE)
+fit_hr14 <- mean(techs$hr_10,na.rm=TRUE)
+fit_hrmax14 <- mean(techs$hr_max_10,na.rm=TRUE)
+fit_symp14 <- mean(techs$sympincrease_2_8, na.rm=TRUE)
+fit_hr16 <- mean(techs$hr_11,na.rm=TRUE)
+fit_hrmax16 <- mean(techs$hr_max_11,na.rm=TRUE)
+fit_symp16 <- mean(techs$sympincrease_2_10, na.rm=TRUE)
+fit_hr18 <- mean(techs$hr_12,na.rm=TRUE)
+fit_hrmax18 <- mean(techs$hr_max_12,na.rm=TRUE)
+fit_symp18 <- mean(techs$sympincrease_2_12, na.rm=TRUE)
+
+
+fit_heartrate <- c(fit_baseline,fit_hr2, fit_hr4, fit_hr6, fit_hr8,fit_hr10, fit_hr12, fit_hr14, fit_hr16, fit_hr18)
+
+fit_heartratemax <- c(fit_hrmax_baseline,fit_hrmax2, fit_hrmax4, fit_hrmax6, fit_hrmax8, fit_hrmax10,fit_hrmax12, fit_hrmax14, fit_hrmax16, fit_hrmax18)
+
+fit_changesymp <- c(fit_symp_baseline,fit_symp2, fit_symp4, fit_symp6, fit_symp8, fit_symp10,fit_symp12, fit_symp14, fit_symp16, fit_symp18)
+
+phase <- c("warmup", "phase1_2min", "phase1_4min", "phase1_6min", "phase2_2min", "phase2_4min", "phase2_6min", "phase2_8min", "phase2_10min", "phase2_12min")
+
+avg_fit_test<- bind_cols(phase,fit_heartrate,fit_heartratemax, fit_changesymp)
+
+avg_fit_test <- avg_fit_test %>% 
+  dplyr::rename(test_phase = ...1, heart_rate = ...2, heart_max = ...3, symp_change = ...4)
+
+avg_fit_test <- avg_fit_test %>%
+  mutate(test_phase = factor(test_phase, levels = phase))
+```
+
 
 ## Plots
 ```{r}
 
-#plot each participant seperately
-ggplot(F1_techs, aes(x = heart_rate, y = rpe, group = participant)) +
-  geom_line() +
-  geom_point() +
-  facet_wrap(~ participant, nrow = 4) +  # Assuming 12 participants, arrange them in 3 rows
-  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+#plot for average heart on top of change in symptoms
+ggplot(avg_fit_test, aes(x = test_phase)) +
+  geom_line(aes(y = heart_rate, group = 1, color = "Heart Rate")) +
+  geom_line(aes(y = symp_change * 30, group = 1, color = "Symptom Change")) +
+  geom_point(aes(y = heart_rate)) + 
+  geom_point(aes(y = symp_change * 30)) +
+  geom_smooth(aes(y = heart_rate), method = "lm", span = 0.3, se = TRUE) +
+  geom_smooth(aes(y = symp_change * 30), method = "lm", span = 0.3, se = TRUE) +
+  scale_y_continuous(name = "Heart rate", 
+    sec.axis = sec_axis(~./40, name = "Change in Symptoms")) +
+  theme_minimal() +
+  theme(axis.title.y.right = element_text(margin = margin(l = 10)),  # Adjust left margin for secondary y-axis
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis text
+    legend.position = "bottom",  # Hide major grid lines
+    panel.grid.minor = element_blank()) +
+  labs(x = "Phase",
+    title = "Average Heart Rate & Change in Symptoms")
+
+
 
 #plot all participants
-primary_plot <- ggplot(F1_techs, aes(x = timepoint, y = heart_rate, color = participant)) +
-  geom_line(aes(group = participant), na.rm = TRUE) +
-  geom_point(data = F1_techs, aes(x = timepoint, y = heart_rate, color = participant)) + theme() +
-  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+primary_plot <- ggplot(F1_techs, aes(x = timepoint)) +
+  geom_line(aes(group = participant, y = heart_rate), na.rm = TRUE) +
+  geom_point(data = F1_techs, aes(x = timepoint, y = heart_rate, color = participant)) + geom_point(data = F1_techs, aes(x = timepoint, y = symp_change, color = participant)) + theme() + labs(x = "Time Point", y = "Heart Rate", title = "") 
 
-primary_plot
 
 secondary_plot <- ggplot(F1_techs, aes(x = timepoint, y = symp_change, color = participant)) +
   geom_line(aes(group = participant), na.rm = TRUE) +
@@ -115,16 +182,11 @@ secondary_plot <- ggplot(F1_techs, aes(x = timepoint, y = symp_change, color = p
     axis.text.y.left = element_blank(), # Hide the primary axis labels on the secondary plot
     axis.ticks.y.left = element_blank(), # Hide the primary axis ticks on the secondary plot
     axis.text.x = element_blank(), # Hide x-axis text
-    axis.ticks.x = element_blank(), # Hide x-axis ticks
-    panel.grid.major = element_blank(), # Hide major grid lines
+    axis.ticks.x = element_blank(), # Hide x-axis ticks # Hide major grid lines
     panel.grid.minor = element_blank(), # Hide minor grid lines
     plot.background = element_rect(fill = NA, color = NA), # Make background transparent
+    legend.position = "none")
 
-  )
-
-secondary_plot
-
-primary_plot + secondary_plot
 
 ```
 
