@@ -18,9 +18,15 @@ library(nlme)
 library(readxl)
 library(tidyr)
 
-Techs <- read_excel("TECHS_DATA_2024-07-08_1630.xlsx")
+Techs <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx")
+Techs_symp <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx", sheet = "Sheet1")
 
 ```
+
+```{r}
+
+```
+
 
 ## Figure 1 and 2 data wrangling
 ```{r cars}
@@ -89,6 +95,8 @@ F1_techs <- F1_techs %>%
 
 F1_techs <- F1_techs %>% 
   dplyr::rename(participant = name...1, timepoint = time_point...24)
+
+
 ```
 
 ```{r}
@@ -175,26 +183,80 @@ avg_fit_test <- avg_fit_test %>%
 
 Techs$randomization_group <- as.factor(Techs$randomization_group)
 
-ggplot2::ggplot(Techs, mapping = aes(x = baseline_cif)) + geom_histogram(mapping = aes(fill= randomization_group)) + theme_bw()+ theme( panel.grid = element_blank()) + theme(text = element_text(size = 16, family = "Times New Roman")) + scale_fill_manual(name = "Group",labels=c("Aerobic", "Balance"), values = c("#d55e00", "#0072b2")) + 
+ggplot2::ggplot(Techs_symp, mapping = aes(x = baseline_symp)) + geom_histogram(mapping = aes(fill= symptoms), binwidth = 1) + xlim(0,15) + theme_bw()+ theme( panel.grid = element_blank()) + theme(text = element_text(size = 16, family = "Times New Roman"))+
   labs(title = "", 
               subtitle = "Distribution of baseline symptoms",
-              x = "# of Symptoms", y = "# of participants") + theme(plot.subtitle = element_text(hjust = 0.5))
+              x = "# of Symptoms", y = "Count") + theme(plot.subtitle = element_text(hjust = 0.5))
+```
 
+
+# symptoms radar plot
+```{r}
+
+top_symptoms <- data.frame(
+    Headache = 0.458,
+    Brain_fog = 0.458,
+    Difficulty_remembering = 0.375,
+    Fatigue = 0.458,
+    Light_sensitivity = 0.500
+)
+
+# Define the max and min values
+max_min <- data.frame(
+    Headache = c(1, 0),
+    Brain_fog = c(1, 0),
+    Difficulty_remembering = c(1, 0),
+    Fatigue = c(1, 0),
+    Light_sensitivity = c(1, 0)
+)
+
+# Combine top symptoms with max and min values
+top_symptoms_plot <- rbind(max_min, top_symptoms)
+
+# Define the correct axis labels
+axis_labels <- seq(0, 1, by = 0.25)
+
+# Create the radar chart
+radarchart(
+    top_symptoms_plot, axistype = 4,
+    # Customizing the plot appearance
+    pcol = c("#f57600"),           # Colors for the lines
+    pfcol = c(rgb(0.2, 0.5, 0.5, 0.5)), # Colors for the filled areas
+    plwd = 3,                      # Line width
+    plty = 1,                      # Line type
+    cglcol = "grey",               # Color of the grid lines
+    cglty = 1,                     # Type of the grid lines
+    axislabcol = "black",           # Color of the axis label     # Axis labels
+    vlcex = 1                    # Font size for the variable labels
+)
+```
 # Figure 1
-F1_plot <- ggplot(F1_techs, aes(x = timepoint, color = participant)) +
-  geom_line(aes(group = participant, y = heart_rate,color = "red"), na.rm = TRUE) +
-  ylim(-50,200) +
-  geom_point(aes(group = participant, y = heart_rate, color = "red"), na.rm = TRUE) +
-  geom_line(aes(group = participant, y = symp_change*10, color = "blue"),na.rm = TRUE) + 
-  geom_point(aes(group = participant, y = symp_change*10,color = "blue"),na.rm = TRUE) + 
+```{r}
+
+F1_techs$timepoint <- as.factor(F1_techs$timepoint)
+
+F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
+  geom_line(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_point(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_line(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
   scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
     sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
-  theme_minimal() + theme(panel.grid.minor = element_blank(),axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none", legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
+  scale_x_discrete(name = "Time Point", labels = phase) +
+   stat_summary(aes(y = heart_rate, group = 1, color = "#f57600"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") +
+  stat_summary(aes(y = symp_change*10, group = 1,color = "blue"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") + theme_minimal() + 
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "none", 
+    legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
     legend.text = element_text(size = 8),  # Smaller legend text
     legend.title = element_text(size = 10),  # Smaller legend title
-    plot.margin = margin(t = 15, r = 15, b = 15, l = 10),axis.title.y.right = element_text(margin = margin(l = 10))) + labs(x = "Time Point", y = "Change in symptoms", title = "") + 
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 10),
+    axis.title.y.right = element_text(margin = margin(l = 10))) + 
+  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Heart rate & ∆ in symptoms during BESTT") + 
   geom_segment(aes(x = 5, xend = 5 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
-  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed")
+  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed") 
 
 F1_plot
 
@@ -220,6 +282,153 @@ ggplot(avg_fit_test, aes(x = test_phase)) +
 
 # FIGURE 2 = rpe and heart rate over time
 
+rpe_heartrate_coef <- lmerTest::lmer(rpe ~ heart_rate + (1|participant), data = F1_techs)
+summary(rpe_heartrate_coef)
+intercepts <- coef(rpe_heartrate_coef)$participant[,1]
+intercept <- mean(intercepts)
+slope <- coef(rpe_heartrate_coef)$participant[,2]
+slopes <- mean(slope)
+summary(rpe_heartrate)
+
+abline_data <- data.frame(participant = rownames(coef(rpe_heartrate_coef)$participant), intercepts = intercepts, slopes = slope)
+
+# RPE X Heart rate plot for all participants
+ggplot(F1_techs, aes(x=heart_rate, y=rpe)) +
+  geom_point() +  
+  geom_abline(slope = slopes, intercept = intercept, size = 3, color = "#f57600") + # slopes for different participants
+  geom_abline(data = abline_data, aes(slope=slope, intercept=intercepts), alpha = 0.25) + 
+  theme(panel.background = element_blank() ,                                                                   panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+        panel.border = element_rect(colour = "black", fill = NA, size = 1),
+          legend.position = "none") +
+  labs(subtitle = "Rate of perceived exertion x Heart rate during BESTT", x = "Heart Rate (bpm)", y = "RPE")
+
+```
+
+
+# Figure 3 data wrangling
+```{r}
+Techs$baseline_hr <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6","baseline_hr_int1_d5_d7","baseline_hr_int1_d5_d8","baseline_hr_int1_d5_d9")], na.rm=TRUE)
+
+
+Techs$baseline_hr_perc <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6","hr_max_baseline_int1_d5_d7","hr_max_baseline_int1_d5_d8","hr_max_baseline_int1_d5_d9")], na.rm=TRUE)
+
+Techs$baseline_chng_symp <- rowMeans(Techs[, c("baseline_cif_int1_d5","baseline_cif_int1_d5_d2","baseline_cif_int1_d5_d3","baseline_cif_int1_d5_d4", "baseline_cif_int1_d5_d5", "baseline_cif_int1_d5_d6", "baseline_cif_int1_d5_d7", "baseline_cif_int1_d5_d8", "baseline_cif_int1_d5_d9")], na.rm=TRUE)
+
+
+Techs$min05_hr <- rowMeans(Techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min05_hr_perc <- rowMeans(Techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6","hr_max_1_int1_d5_d7","hr_max_1_int1_d5_d8","hr_max_1_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min05_chng_symp <- rowMeans(Techs[, c("min5_cif_int1","min5_cif_int2","min5_cif_int3","min5_cif_int4", "min5_cif_int5", "min5_cif_int6", "min5_cif_int7", "min5_cif_int8", "min5_cif_int9")], na.rm=TRUE)
+
+Techs$min10_hr <- rowMeans(Techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min10_hr_perc <- rowMeans(Techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6","hr_max_2_int1_d5_d7","hr_max_2_int1_d5_d8","hr_max_2_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min10_chng_symp <- rowMeans(Techs[, c("min10_cif_int1","min10_cif_int2","min10_cif_int3","min10_cif_int4", "min10_cif_int5", "min10_cif_int6", "min10_cif_int7", "min10_cif_int8", "min10_cif_int9")], na.rm=TRUE)
+
+Techs$min15_hr <- rowMeans(Techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6","hr_3_int1_d5_d7","hr_3_int1_d5_d8","hr_3_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min15_hr_perc <- rowMeans(Techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6","hr_max_3_int1_d5_d7","hr_max_3_int1_d5_d8","hr_max_3_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min15_chng_symp <- rowMeans(Techs[, c("min15_cif_int1","min15_cif_int2","min15_cif_int3","min15_cif_int4", "min15_cif_int5", "min15_cif_int6", "min15_cif_int7", "min15_cif_int8", "min15_cif_int9")], na.rm=TRUE)
+
+Techs$min20_hr <- rowMeans(Techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6","hr_4_int1_d5_d7","hr_4_int1_d5_d8","hr_4_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min20_hr_perc <- rowMeans(Techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6","hr_max_4_int1_d5_d7","hr_max_4_int1_d5_d8","hr_max_4_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min20_chng_symp <- rowMeans(Techs[, c("min20_cif_int1","min20_cif_int2","min20_cif_int3","min20_cif_int4", "min20_cif_int5", "min20_cif_int6", "min20_cif_int7", "min20_cif_int8", "min20_cif_int9")], na.rm=TRUE)
+
+Techs$min25_hr <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min25_hr_perc <- rowMeans(Techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6","hr_max_5_int1_d5_d7","hr_max_5_int1_d5_d8","hr_max_5_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min25_chng_symp <- rowMeans(Techs[, c("min25_cif_int1","min25_cif_int2","min25_cif_int3","min25_cif_int4", "min25_cif_int5", "min25_cif_int6", "min25_cif_int7", "min25_cif_int8", "min25_cif_int9")], na.rm=TRUE)
+
+Techs$min30_hr <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min30_hr_perc <- rowMeans(Techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6","hr_max_6_int1_d5_d7","hr_max_6_int1_d5_d8","hr_max_6_int1_d5_d9")], na.rm=TRUE)
+
+Techs$min30_chng_symp <- rowMeans(Techs[, c("min30_cif_int1","min30_cif_int2","min30_cif_int3","min30_cif_int4", "min30_cif_int5", "min30_cif_int6", "min30_cif_int7", "min30_cif_int8", "min30_cif_int9")], na.rm=TRUE)
+
+Techs <- Techs %>% 
+  dplyr::rename(participant = name)
+
+long_techs1 <- Techs %>%
+  gather(key = "time_point", value = "heart_rate", baseline_hr, min05_hr, min10_hr, min15_hr, min20_hr, min25_hr, min30_hr)
+
+long_techs2 <- Techs %>%
+  gather(key = "timepoint", value = "severity_score",baseline_chng_symp, min05_chng_symp, min10_chng_symp, min15_chng_symp, min20_chng_symp, min25_chng_symp, min30_chng_symp)
+
+long_techs1 <- long_techs1 %>%
+select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
+
+long_techs2 <- long_techs2 %>%
+select(timepoint, severity_score)
+
+long_techs <- bind_cols(long_techs1, long_techs2) #combine heart and symptoms df
+
+long_techs <- long_techs %>% select(-timepoint) #remove timepoint variable
+
+long_techs <- long_techs[long_techs$randomization_group == 0,] #only include aerobic group
+
+long_techs <- long_techs[long_techs$participant != "techs_18", ]
+
+```
+
+
+## Plots
+```{r}
+
+# baseline symptom distribution
+Techs$randomization_group <- as.factor(Techs$randomization_group)
+
+ggplot2::ggplot(Techs, mapping = aes(x = baseline_cif)) + geom_histogram(mapping = aes(fill= randomization_group)) + theme_bw()+ theme( panel.grid = element_blank()) + theme(text = element_text(size = 16, family = "Times New Roman")) + scale_fill_manual(name = "Group",labels=c("Aerobic", "Balance"), values = c("#d55e00", "#0072b2")) + 
+  labs(title = "", 
+              subtitle = "Distribution of baseline symptoms",
+              x = "# of Symptoms", y = "# of participants") + theme(plot.subtitle = element_text(hjust = 0.5))
+
+# Figure 2
+F1_plot <- ggplot(F1_techs, aes(x = timepoint, color = participant)) +
+  geom_line(aes(group = participant, y = heart_rate,color = "red"), na.rm = TRUE) +
+  ylim(-50,200) +
+  geom_point(aes(group = participant, y = heart_rate, color = "red"), na.rm = TRUE) +
+  geom_line(aes(group = participant, y = symp_change*10, color = "blue"),na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = symp_change*10,color = "blue"),na.rm = TRUE) + 
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
+    sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
+  theme_minimal() + theme(panel.grid.minor = element_blank(),axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none", legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
+    legend.text = element_text(size = 8),  # Smaller legend text
+    legend.title = element_text(size = 10),  # Smaller legend title
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 10),axis.title.y.right = element_text(margin = margin(l = 10))) + labs(x = "Time Point", y = "Change in symptoms", title = "") + 
+  geom_segment(aes(x = 5, xend = 5 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
+  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed")
+
+F1_plot
+
+#plot for average heart on top of change in symptoms = FIGURE 2
+ggplot(avg_fit_test, aes(x = test_phase)) +
+  geom_line(aes(y = heart_rate, group = 1, color = "Heart Rate")) +
+  geom_line(aes(y = symp_change * 30, group = 1, color = "Symptom Change")) +
+    geom_point(aes(y = heart_rate)) + 
+  geom_point(aes(y = symp_change * 30)) +
+   geom_smooth(aes(y = heart_rate), method = "gam", span = 0.3, se = TRUE) +
+  geom_smooth(aes(y = symp_change * 30), method = "gam", span = 0.3, se = TRUE) +
+  scale_y_continuous(name = "Heart rate", 
+    sec.axis = sec_axis(~./40, name = "Change in Symptoms")) +
+  theme_minimal() +
+  theme(axis.title.y.right = element_text(margin = margin(l = 12)),  # Adjust left margin for secondary y-axis
+    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis text
+    legend.position = "bottom",  
+    panel.grid.minor = element_blank()) + # Hide major grid lines
+  labs(x = "Phase",
+    title = "Average Heart Rate & Change in Symptoms") + 
+  geom_segment(aes(x = 5, xend = 5 , y = 0, yend = 200), size = 1, color = "black")
+
+
+# FIGURE 3 = rpe and heart rate over time
+
 rpe_heartrate <- lm(rpe ~ heart_rate, data = avg_fit_test)
 summary(rpe_heartrate)
 # RPE X Heart rate plot for all participants
@@ -229,50 +438,28 @@ ggplot(F1_techs, aes(x=rpe, y = heart_rate)) + xlim(6, 20) + ylim(50,200) +
                              panel.grid.minor = element_blank()) +
   labs(subtitle = "Rate of perceived exertion x Heart rate during BESTT", x = "RPE", y = "Heart Rate (bpm)")
 
+#FIGURE 4
 
+ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
+  geom_line(color = "#f57600") +
+  geom_point(color = "#f57600") + 
+  geom_line(aes(group = participant, y = severity_score*10),na.rm = TRUE, color = "blue") + 
+  geom_point(aes(group = participant, y = severity_score*10),na.rm = TRUE, color = "blue") + 
+  scale_y_continuous(name = "Heart rate", limits = c(-25, 200),
+    sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(0,18,by = 3))) +
+  facet_wrap(~ participant, nrow = 3) +  # Assuming 12 participants, arrange them in 3 rows
+  geom_rect(data = long_techs, aes(xmin = "baseline_hr", xmax = "min30_hr", ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.20) +
+  theme(panel.grid.major = element_line(color = "grey"),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none", legend.key.size = unit(0.5, "cm"),
+    axis.title.y.right = element_text(margin = margin(l = 10)),
+    panel.background = element_rect(fill = "white", color = "black")) +
+  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
 
 ```
 
 
-# Figure 3 data wrangling
-```{r}
-Techs$baseline_hr <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6","baseline_hr_int1_d5_d7","baseline_hr_int1_d5_d8","baseline_hr_int1_d5_d9","baseline_hr_int1_d5_d10","baseline_hr_int1_d5_d11","baseline_hr_int1_d5_d12")], na.rm=TRUE)
-
-
-Techs$baseline_hr_perc <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6","hr_max_baseline_int1_d5_d7","hr_max_baseline_int1_d5_d8","hr_max_baseline_int1_d5_d9","hr_max_baseline_int1_d5_d10","hr_max_baseline_int1_d5_d11","hr_max_baseline_int1_d5_d12")], na.rm=TRUE)
-
-
-Techs$min05_hr <- rowMeans(Techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9","hr_1_int1_d5_d10","hr_1_int1_d5_d11","hr_1_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min05_hr_perc <- rowMeans(Techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6","hr_max_1_int1_d5_d7","hr_max_1_int1_d5_d8","hr_max_1_int1_d5_d9","hr_max_1_int1_d5_d10","hr_max_1_int1_d5_d11","hr_max_1_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min10_hr <- rowMeans(Techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9","hr_2_int1_d5_d10","hr_2_int1_d5_d11","hr_2_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min10_hr_perc <- rowMeans(Techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6","hr_max_2_int1_d5_d7","hr_max_2_int1_d5_d8","hr_max_2_int1_d5_d9","hr_max_2_int1_d5_d10","hr_max_2_int1_d5_d11","hr_max_2_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min15_hr <- rowMeans(Techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6","hr_3_int1_d5_d7","hr_3_int1_d5_d8","hr_3_int1_d5_d9","hr_3_int1_d5_d10","hr_3_int1_d5_d11","hr_3_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min15_hr_perc <- rowMeans(Techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6","hr_max_3_int1_d5_d7","hr_max_3_int1_d5_d8","hr_max_3_int1_d5_d9","hr_max_3_int1_d5_d10","hr_max_3_int1_d5_d11","hr_max_3_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min20_hr <- rowMeans(Techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6","hr_4_int1_d5_d7","hr_4_int1_d5_d8","hr_4_int1_d5_d9","hr_4_int1_d5_d10","hr_4_int1_d5_d11","hr_4_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min20_hr_perc <- rowMeans(Techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6","hr_max_4_int1_d5_d7","hr_max_4_int1_d5_d8","hr_max_4_int1_d5_d9","hr_max_4_int1_d5_d10","hr_max_4_int1_d5_d11","hr_max_4_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min25_hr <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9","hr_5_int1_d5_d10","hr_5_int1_d5_d11","hr_5_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min25_hr_perc <- rowMeans(Techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6","hr_max_5_int1_d5_d7","hr_max_5_int1_d5_d8","hr_max_5_int1_d5_d9","hr_max_5_int1_d5_d10","hr_max_5_int1_d5_d11","hr_max_5_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min30_hr <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9","hr_6_int1_d5_d10","hr_6_int1_d5_d11","hr_6_int1_d5_d12")], na.rm=TRUE)
-
-Techs$min30_hr_perc <- rowMeans(Techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6","hr_max_6_int1_d5_d7","hr_max_6_int1_d5_d8","hr_max_6_int1_d5_d9","hr_max_6_int1_d5_d10","hr_max_6_int1_d5_d11","hr_max_6_int1_d5_d12")], na.rm=TRUE)
-
-
-
-long_techs <- Techs %>%
-  gather(key = "time_point", value = "heart_rate", baseline_hr, min05_hr, min10_hr, min15_hr, min20_hr, min25_hr, min30_hr)
-
-long_techs <- long_techs %>%
-dpylr:: select(participant, randomization_group, time_point, heart_rate) # need to add change in symptoms from interventions
 
 ```
 
