@@ -19,8 +19,9 @@ library(readxl)
 library(tidyr)
 library(tableone)
 
-Techs <- read_excel("TECHS_DATA_2024-07-08_1630.xlsx")
+Techs <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx")
 Techs_symp <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx", sheet = "Sheet1")
+fit_test <- read_excel("techs_fitnesstest_table.xlsx")
 
 ```
 
@@ -226,7 +227,6 @@ radarchart(
 ```{r}
 Techs$baseline <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6")], na.rm=TRUE)
 
-
 Techs$baseline_hr_perc <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6")], na.rm=TRUE)
 
 Techs$baseline_chng_symp <- rowMeans(Techs[, c("symp_change_int1_d5_d1","symp_change_int1_d5_d2","symp_change_int1_d5_d3","symp_change_int1_d5_d4", "symp_change_int1_d5_d5", "symp_change_int1_d5_d6")], na.rm=TRUE)
@@ -296,6 +296,9 @@ long_techs3 <- Techs %>%
 
 long_techs1 <- long_techs1 %>%
 select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
+
+long_techs2 <- long_techs2 <- long_techs2 %>%
+select(timepoint, symptom_change)
 
 long_techs3 <- long_techs3 %>%
 select(timepoint, severity_score)
@@ -372,13 +375,16 @@ F1_techs_lme <- F1_techs %>%
                    "hr_11" = 10,
                    "hr_12" = 11))
 
+# This model is preferred. Significant chi-square
 rpe_heartrate_coef <- lmerTest::lmer(rpe ~ heart_rate + as.factor(timepoint) + (1 + heart_rate|participant), data = F1_techs_lme)
+
+F1_techs_lme$timepoint <- as.numeric(F1_techs_lme$timepoint)
 
 rpe_heartrate_coef1 <- lmerTest::lmer(rpe ~ heart_rate + timepoint + (1 + heart_rate|participant), data = F1_techs_lme)
 
 anova(rpe_heartrate_coef,rpe_heartrate_coef1)
 
-summary(rpe_heartrate_coef)
+summary(rpe_heartrate_coef1)
 
 intercepts <- coef(rpe_heartrate_coef)$participant[,1]
 intercept <- mean(intercepts)
@@ -408,10 +414,10 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
   geom_point(color = "#f57600") + 
   geom_line(aes(group = participant, y = severity_score*9),na.rm = TRUE, color = "blue") + 
   geom_point(aes(group = participant, y = severity_score*9),na.rm = TRUE, color = "blue") + 
-  scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 225),
     sec.axis = sec_axis(~./10, name = "Change is Severity Scores", breaks = seq(0,20,by = 4))) +
   facet_wrap(~ participant, nrow = 3) +  # Assuming 12 participants, arrange them in 3 rows
-  geom_rect(data = long_techs, aes(xmin = "baseline", xmax = "min30", ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.20) +
+  geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.20) +
   theme(panel.grid.major = element_line(color = "grey"),
     panel.grid.major.y = element_blank(),
     axis.text.x = element_text(angle = 45, hjust = 1),
