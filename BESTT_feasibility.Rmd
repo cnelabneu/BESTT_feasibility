@@ -18,6 +18,7 @@ library(nlme)
 library(readxl)
 library(tidyr)
 library(tableone)
+library(sjPlot)
 
 Techs <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx")
 Techs_symp <- read_excel("TECHS_DATA_2024-07-15_1422.xlsx", sheet = "Sheet1")
@@ -376,15 +377,13 @@ F1_techs_lme <- F1_techs %>%
                    "hr_12" = 11))
 
 # This model is preferred. Significant chi-square
-rpe_heartrate_coef <- lmerTest::lmer(rpe ~ heart_rate + as.factor(timepoint) + (1 + heart_rate|participant), data = F1_techs_lme)
-
 F1_techs_lme$timepoint <- as.numeric(F1_techs_lme$timepoint)
 
-rpe_heartrate_coef1 <- lmerTest::lmer(rpe ~ heart_rate + timepoint + (1 + heart_rate|participant), data = F1_techs_lme)
+rpe_heartrate_coef <- lmerTest::lmer(rpe ~ heart_rate + timepoint + (1 + heart_rate|participant), data = F1_techs_lme)
 
-anova(rpe_heartrate_coef,rpe_heartrate_coef1)
+summary(rpe_heartrate_coef)
 
-summary(rpe_heartrate_coef1)
+tab_model(rpe_heartrate_coef, digits = 3, digits.re = 3, show.df = TRUE, df.method = "satterthwaite")
 
 intercepts <- coef(rpe_heartrate_coef)$participant[,1]
 intercept <- mean(intercepts)
@@ -426,6 +425,34 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
     panel.background = element_rect(fill = "white", color = "black")) +
   labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
 
+```
+
+```{r}
+
+F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
+  geom_line(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_point(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_line(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
+    sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
+  scale_x_discrete(name = "Time Point", labels = phase) +
+   stat_summary(aes(y = heart_rate, group = 1, color = "#f57600"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") +
+  stat_summary(aes(y = symp_change*10, group = 1,color = "blue"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") + theme_minimal() + 
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "none", 
+    legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
+    legend.text = element_text(size = 8),  # Smaller legend text
+    legend.title = element_text(size = 10),  # Smaller legend title
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 10),
+    axis.title.y.right = element_text(margin = margin(l = 10))) + 
+  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Heart rate & ∆ in symptoms during BESTT") + 
+  geom_segment(aes(x = 5, xend = 5 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
+  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed") 
+
+F1_plot
 ```
 
 
