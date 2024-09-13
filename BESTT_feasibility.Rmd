@@ -400,7 +400,7 @@ ggplot(F1_techs_lme, aes(x=heart_rate, y=rpe, group = participant)) +
   geom_abline(data = abline_data, aes(slope=slopes, intercept=intercepts), alpha = 0.25) + 
   theme(panel.background = element_blank() ,                                                                   panel.grid.major = element_blank(),
           panel.grid.minor = element_blank(),
-        panel.border = element_rect(colour = "black", fill = NA, size = 1),
+        panel.border = element_rect(colour = "black", fill = NA),
           legend.position = "none") +
   labs(subtitle = "Rate of perceived exertion x Heart rate during BESTT", x = "Heart Rate (bpm)", y = "RPE")
 
@@ -414,7 +414,7 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
   geom_line(aes(group = participant, y = severity_score*9),na.rm = TRUE, color = "blue") + 
   geom_point(aes(group = participant, y = severity_score*9),na.rm = TRUE, color = "blue") + 
   scale_y_continuous(name = "Heart rate", limits = c(-50, 225),
-    sec.axis = sec_axis(~./10, name = "Change is Severity Scores", breaks = seq(0,20,by = 4))) +
+    sec.axis = sec_axis(~./10, name = "Change in severity scores", breaks = seq(0,20,by = 4))) +
   facet_wrap(~ participant, nrow = 3) +  # Assuming 12 participants, arrange them in 3 rows
   geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.20) +
   theme(panel.grid.major = element_line(color = "grey"),
@@ -423,7 +423,7 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
     legend.position = "bottom", legend.key.size = unit(0.5, "cm"),
     axis.title.y.right = element_text(margin = margin(l = 10)),
     panel.background = element_rect(fill = "white", color = "black")) +
-  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant") + geom_segment(aes(x = 0, xend = 8, y =60, yend = 60), size = 0.5, color = "black", linetype = "dashed")
 
 ```
 
@@ -432,13 +432,13 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
 F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
   geom_line(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
   geom_point(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
-  geom_line(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
-  geom_point(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
-  scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
-    sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
+  geom_line(aes(group = participant, y = rpe*5, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = rpe*5, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  scale_y_continuous(name = "Heart rate", limits = c(0, 200),
+    sec.axis = sec_axis(~./5, name = "Change in RPE", breaks = seq(0,20,by = 4))) +
   scale_x_discrete(name = "Time Point", labels = phase) +
    stat_summary(aes(y = heart_rate, group = 1, color = "#f57600"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") +
-  stat_summary(aes(y = symp_change*10, group = 1,color = "blue"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") + theme_minimal() + 
+  stat_summary(aes(y = rpe*5, group = 1,color = "blue"), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") + theme_minimal() + 
   theme(
     panel.grid.minor = element_blank(),
     axis.text.x = element_text(angle = 45, hjust = 1), 
@@ -448,9 +448,8 @@ F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
     legend.title = element_text(size = 10),  # Smaller legend title
     plot.margin = margin(t = 15, r = 15, b = 15, l = 10),
     axis.title.y.right = element_text(margin = margin(l = 10))) + 
-  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Heart rate & ∆ in symptoms during BESTT") + 
-  geom_segment(aes(x = 5, xend = 5 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
-  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed") 
+  labs(x = "Time Point", y = "Change in RPE", subtitle = "Heart rate & ∆ in RPE during BESTT") + 
+  geom_segment(aes(x = 5, xend = 5 , y = 0, yend = 200), size = 0.5, color = "black", linetype = "dashed") 
 
 F1_plot
 ```
