@@ -454,4 +454,28 @@ F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
 F1_plot
 ```
 
+## Differences in outcome based on adherence
+```{r}
+Techs$adherence <- as.factor(Techs$adherence)
+Techs$annual_income <- as.numeric(Techs$annual_income)
+
+Techs1 <- Techs[-c(20),]
+
+t.test(Techs1$num_symp_baseline ~ Techs1$adherence, na.rm = TRUE)
+sd(Techs$days_since_injury[Techs$adherence == "Completed"],na.rm = TRUE)
+sd(Techs$days_since_injury[Techs$adherence == "Dropped out"],na.rm = TRUE)
+
+
+prop.test(table(Techs$annual_income, Techs$adherence))
+
+levels(Techs$adherence) <- c("Completed","Dropped out")
+
+Techs%>%ggplot(aes(x=adherence, y = baseline_cif, na.omit())) + 
+  geom_boxplot(width=0.5,lwd=1.0, aes(fill=adherence), outlier.size = 0) + geom_point()
+
+prop_df <- data.frame(Category = c("Completed","Dropped out"),
+                      Proportion = c(0.5833333, 0.75))
+ggplot(prop_df, aes(x = Category, y = Proportion)) +
+  geom_bar(stat = "identity", aes(fill = Category))
+```
 
