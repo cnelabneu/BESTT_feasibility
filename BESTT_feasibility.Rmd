@@ -6,12 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-setwd("/Users/marknwakamma/Documents/Statistics Work/BESTT_feasibility")
+knitr::opts_chunk$set(root.dir = "/Users/nwakamma.m/Documents/R-code")
 
 library(rlang)
 library(patchwork) 
 library(ggplot2)
+library(tidyverse)
 library(dplyr)
 library(psych)
 library(nlme)
@@ -21,35 +21,27 @@ library(tableone)
 library(sjPlot)
 library(fmsb)
 
-Techs <- read_excel("TECHS_DATA_2024-10-30_1206.xlsx")
-Techs_symp <- read_excel("TECHS_DATA_2024-10-30_1206.xlsx", sheet = "baseline symptoms")
-fit_test <- read_excel("TECHS_DATA_2024-10-30_1206.xlsx",sheet = "Fitness test")
-
+Techs <- read_excel("/Users/nwakamma.m/Documents/TECHS/techs_BESTT_final_data.xlsx")
+bestt_test <- read_excel("/Users/nwakamma.m/Documents/TECHS/techs_BESTT_all.xlsx")
 ```
 
 ## Figure 1 and 2 data wrangling
 ```{r cars}
 # heart rate from cycle test
-techs_fitness_hr <- Techs %>%
-  dplyr::select(name, baseline_hr,baseline_hr_2_v1,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
-
-symp_baseline <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+techs_fitness_hr <- bestt_test %>%
+  dplyr::select(name, baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
 
 # change in symptoms from cycle test
-techs_fitness_symp <- Techs %>%
-  dplyr::select(sympincrease_baseline,sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
+techs_fitness_symp <- bestt_test %>%
+  dplyr::select(bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11,bestt_severity_change_12)
 
-
-techs_fitness_symp <- techs_fitness_symp %>% 
-            mutate(symp_baseline = symp_baseline)
-
-techs_fitness_numbsymp <- Techs %>%
-  dplyr::select(sympincrease_baseline,sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
+techs_fitness_numbsymp <- bestt_test %>%
+  dplyr::select(bestt_numb_symps_baseline,bestt_numb_symps_2,bestt_numb_symps_4,bestt_numb_symps_6,bestt_numb_symps_7,bestt_numb_symps_8,bestt_numb_symps_9,bestt_numb_symps_10,bestt_numb_symps_11,bestt_numb_symps_12)
 
 
 # RPE from cycle test
-techs_fitness_rpe <- Techs %>%
-  dplyr::select(borg_baseline,baseline_borg_2_v1,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+techs_fitness_rpe <- bestt_test %>%
+  dplyr::select(borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
 
 # Combine heart rate and change in symptoms df
 F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
@@ -58,9 +50,9 @@ F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
 ```{r}
 # Make combined heart rate data long for plotting
 F1_techs_hr_long <- F1_techs %>%
-  gather(key = "time_point", value = "heart_rate", baseline_hr,baseline_hr_2_v1,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
+  gather(key = "time_point", value = "heart_rate", baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
 
-time_levels <- c("baseline_hr","baseline_hr_2_v1","hr_2","hr_4","hr_6","hr_7","hr_8","hr_9","hr_10","hr_11","hr_12")
+time_levels <- c("baseline_hr","hr_2","hr_4","hr_6","hr_7","hr_8","hr_9","hr_10","hr_11","hr_12")
 
 # Convert `time_point` to a factor with specified levels
 F1_techs_hr_long <- F1_techs_hr_long %>%
@@ -69,9 +61,9 @@ F1_techs_hr_long <- F1_techs_hr_long %>%
 
 ```{r}
 # Make combined symptoms change data long for plotting
-F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", symp_baseline, sympincrease_baseline,sympincrease_2,sympincrease_4,sympincrease_6,sympincrease_2_2,sympincrease_2_4,sympincrease_2_6,sympincrease_2_8,sympincrease_2_10,sympincrease_2_12)
+F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11,bestt_severity_change_12)
 
-symp_levels <- c("symp_baseline","sympincrease_baseline","sympincrease_2","sympincrease_4","sympincrease_6","sympincrease_2_2","sympincrease_2_4","sympincrease_2_6","sympincrease_2_8","sympincrease_2_10","sympincrease_2_12")
+symp_levels <- c("symp_baseline","sympincrease_2","sympincrease_4","sympincrease_6","sympincrease_2_2","sympincrease_2_4","sympincrease_2_6","sympincrease_2_8","sympincrease_2_10","sympincrease_2_12")
 
 # Convert `time_point_symp` to a factor with specified levels
 F1_techs_symp_long <- F1_techs_symp_long %>%
@@ -79,9 +71,9 @@ F1_techs_symp_long <- F1_techs_symp_long %>%
 ```
 
 ```{r}
-F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,baseline_borg_2_v1,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
 
-rpe_levels <- c("borg_baseline","baseline_borg_2_v1","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10", "borg_11", "borg_12")
+rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10", "borg_11", "borg_12")
 
 # Convert `time_point_rpe` to a factor with specified levels
 F1_techs_rpe_long <- F1_techs_rpe_long %>%
@@ -94,10 +86,10 @@ F1_techs <- bind_cols(F1_techs_hr_long,F1_techs_symp_long,F1_techs_rpe_long)
 
 # Create a subset of only variables you will plot
 F1_techs <- F1_techs %>% 
-  dplyr::select(name...1, time_point...24, heart_rate, symp_change, rpe)
+  dplyr::select(name...1, time_point...22, heart_rate, symp_change, rpe)
 
 F1_techs <- F1_techs %>% 
-  dplyr::rename(participant = name...1, timepoint = time_point...24)
+  dplyr::rename(participant = name...1, timepoint = time_point...22)
 ```
 
 ```{r}
@@ -234,74 +226,261 @@ radarchart(
 
 ## Figure 4 data wrangling
 ```{r}
-Techs$baseline <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6","baseline_hr_int1_d5_d7","baseline_hr_int1_d5_d8","baseline_hr_int1_d5_d9","baseline_hr_int1_d5_d10","baseline_hr_int1_d5_d11","baseline_hr_int1_d5_d12","baseline_hr_int1_d5_d13","baseline_hr_int1_d5_d14","baseline_hr_int1_d5_d15","baseline_hr_int1_d5_d16","baseline_hr_int1_d5_d17","baseline_hr_int1_d5_d18","baseline_hr_int1_d5_d19","baseline_hr_int1_d5_d20","baseline_hr_int1_d5_d21","baseline_hr_int1_d5_d22","baseline_hr_int1_d5_d23","baseline_hr_int1_d5_d24","baseline_hr_int1_d5_d25","baseline_hr_int1_d5_d26","baseline_hr_int1_d5_d27","baseline_hr_int1_d5_d28","baseline_hr_int1_d5_d29","baseline_hr_int1_d5_d30","baseline_hr_int1_d5_d31","baseline_hr_int1_d5_d32","baseline_hr_int1_d5_d33","baseline_hr_int1_d5_d34","baseline_hr_int1_d5_d35","baseline_hr_int1_d5_d36")], na.rm=TRUE)
 
-Techs$baseline_hr_perc <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_hr_perc <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6","hr_max_baseline_int1_d5_d7","hr_max_baseline_int1_d5_d8","hr_max_baseline_int1_d5_d9","hr_max_baseline_int1_d5_d10","hr_max_baseline_int1_d5_d11","hr_max_baseline_int1_d5_d12","hr_max_baseline_int1_d5_d13","hr_max_baseline_int1_d5_d14","hr_max_baseline_int1_d5_d15","hr_max_baseline_int1_d5_d16","hr_max_baseline_int1_d5_d17","hr_max_baseline_int1_d5_d18","hr_max_baseline_int1_d5_d19","hr_max_baseline_int1_d5_d20","hr_max_baseline_int1_d5_d21","hr_max_baseline_int1_d5_d22","hr_max_baseline_int1_d5_d23","hr_max_baseline_int1_d5_d24","hr_max_baseline_int1_d5_d25","hr_max_baseline_int1_d5_d26","hr_max_baseline_int1_d5_d27","hr_max_baseline_int1_d5_d28","hr_max_baseline_int1_d5_d29","hr_max_baseline_int1_d5_d30","hr_max_baseline_int1_d5_d31","hr_max_baseline_int1_d5_d32","hr_max_baseline_int1_d5_d33","hr_max_baseline_int1_d5_d34","hr_max_baseline_int1_d5_d35","hr_max_baseline_int1_d5_d36")], na.rm=TRUE)
 
-Techs$baseline_chng_symp <- rowMeans(Techs[, c("symp_change_int1_d5_d1","symp_change_int1_d5_d2","symp_change_int1_d5_d3","symp_change_int1_d5_d4", "symp_change_int1_d5_d5", "symp_change_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_chng_symp <- rowMeans(Techs[, c("severity_change_int1","severity_change_int1_d2","severity_change_int1_d3", "severity_change_int1_d4", "severity_change_int1_d5","severity_change_int1_d6","severity_change_int1_d7","severity_change_int1_d8","severity_change_int1_d9","severity_change_int1_d10","severity_change_int1_d11","severity_change_int1_d12","severity_change_int1_d13","severity_change_int1_d14","severity_change_int1_d15","severity_change_int1_d16","severity_change_int1_d17","severity_change_int1_d18","severity_change_int1_d19","severity_change_int1_d20","severity_change_int1_d21","severity_change_int1_d22","severity_change_int1_d23","severity_change_int1_d24","severity_change_int1_d25","severity_change_int1_d26","severity_change_int1_d27","severity_change_int1_d28","severity_change_int1_d29","severity_change_int1_d30","severity_change_int1_d31","severity_change_int1_d32","severity_change_int1_d33","severity_change_int1_d34","severity_change_int1_d35","severity_change_int1_d36")], na.rm=TRUE)
 
-Techs$baseline_severity <- rowMeans(Techs[, c("num_sev_int1_d5_d1","num_sev_int1_d5_d2","num_sev_int1_d5_d3","num_sev_int1_d5_d4", "num_sev_int1_d5_d5", "num_sev_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_numb_symps <- rowMeans(Techs[, c("numb_symps_int1","numb_symps_int1_d2","numb_symps_int1_d3","numb_symps_int1_d4", "numb_symps_int1_d5", "numb_symps_int1_d6","numb_symps_int1_d7","numb_symps_int1_d8","numb_symps_int1_d9","numb_symps_int1_d10","numb_symps_int1_d11","numb_symps_int1_d12","numb_symps_int1_d13","numb_symps_int1_d14","numb_symps_int1_d15","numb_symps_int1_d16","numb_symps_int1_d17","numb_symps_int1_d18","numb_symps_int1_d19","numb_symps_int1_d20","numb_symps_int1_d21","numb_symps_int1_d22","numb_symps_int1_d23","numb_symps_int1_d24","numb_symps_int1_d25","numb_symps_int1_d26","numb_symps_int1_d27","numb_symps_int1_d28","numb_symps_int1_d29","numb_symps_int1_d30","numb_symps_int1_d31","numb_symps_int1_d32","numb_symps_int1_d33","numb_symps_int1_d34","numb_symps_int1_d35", "numb_symps_int1_d36")], na.rm=TRUE)
+
+Techs$min05 <- rowMeans(Techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9","hr_1_int1_d5_d10","hr_1_int1_d5_d11","hr_1_int1_d5_d12","hr_1_int1_d5_d13","hr_1_int1_d5_d14","hr_1_int1_d5_d15","hr_1_int1_d5_d16","hr_1_int1_d5_d17","hr_1_int1_d5_d18","hr_1_int1_d5_d19","hr_1_int1_d5_d20","hr_1_int1_d5_d21","hr_1_int1_d5_d22","hr_1_int1_d5_d23","hr_1_int1_d5_d24","hr_1_int1_d5_d25","hr_1_int1_d5_d26","hr_1_int1_d5_d27","hr_1_int1_d5_d28","hr_1_int1_d5_d29","hr_1_int1_d5_d30","hr_1_int1_d5_d31","hr_1_int1_d5_d32","hr_1_int1_d5_d33","hr_1_int1_d5_d34","hr_1_int1_d5_d35","hr_1_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min05_hr_perc <- rowMeans(Techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6","hr_max_1_int1_d5_d7","hr_max_1_int1_d5_d8","hr_max_1_int1_d5_d9","hr_max_1_int1_d5_d10","hr_max_1_int1_d5_d11","hr_max_1_int1_d5_d12","hr_max_1_int1_d5_d13","hr_max_1_int1_d5_d14","hr_max_1_int1_d5_d15","hr_max_1_int1_d5_d16","hr_max_1_int1_d5_d17","hr_max_1_int1_d5_d18","hr_max_1_int1_d5_d19","hr_max_1_int1_d5_d20","hr_max_1_int1_d5_d21","hr_max_1_int1_d5_d22","hr_max_1_int1_d5_d23","hr_max_1_int1_d5_d24","hr_max_1_int1_d5_d25","hr_max_1_int1_d5_d26","hr_max_1_int1_d5_d27","hr_max_1_int1_d5_d28","hr_max_1_int1_d5_d29","hr_max_1_int1_d5_d30","hr_max_1_int1_d5_d31","hr_max_1_int1_d5_d32","hr_max_1_int1_d5_d33","hr_max_1_int1_d5_d34","hr_max_1_int1_d5_d35","hr_max_1_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min05_chng_symp <- rowMeans(Techs[, c("severity_change_1_int1","severity_change_1_int1_d2","severity_change_1_int1_d3", "severity_change_1_int1_d4", "severity_change_1_int1_d5","severity_change_1_int1_d6","severity_change_1_int1_d7","severity_change_1_int1_d8","severity_change_1_int1_d9","severity_change_1_int1_d10","severity_change_1_int1_d11","severity_change_1_int1_d12","severity_change_1_int1_d13","severity_change_1_int1_d14","severity_change_1_int1_d15","severity_change_1_int1_d16","severity_change_1_int1_d17","severity_change_1_int1_d18","severity_change_1_int1_d19","severity_change_1_int1_d20","severity_change_1_int1_d21","severity_change_1_int1_d22","severity_change_1_int1_d23","severity_change_1_int1_d24","severity_change_1_int1_d25","severity_change_1_int1_d26","severity_change_1_int1_d27","severity_change_1_int1_d28","severity_change_1_int1_d29","severity_change_1_int1_d30","severity_change_1_int1_d31","severity_change_1_int1_d32","severity_change_1_int1_d33","severity_change_1_int1_d34","severity_change_1_int1_d35","severity_change_1_int1_d36")], na.rm=TRUE)
+
+Techs$min05_numb_symps<- rowMeans(Techs[, c("numb_symps_1_int1","numb_symps_1_int1_d2","numb_symps_1_int1_d3","numb_symps_1_int1_d4", "numb_symps_1_int1_d5", "numb_symps_1_int1_d6","numb_symps_1_int1_d7","numb_symps_1_int1_d8","numb_symps_1_int1_d9","numb_symps_1_int1_d10","numb_symps_1_int1_d11","numb_symps_1_int1_d12","numb_symps_1_int1_d13","numb_symps_1_int1_d14","numb_symps_1_int1_d15","numb_symps_1_int1_d16","numb_symps_1_int1_d17","numb_symps_1_int1_d18","numb_symps_1_int1_d19","numb_symps_1_int1_d20","numb_symps_1_int1_d21","numb_symps_1_int1_d22","numb_symps_1_int1_d23","numb_symps_1_int1_d24","numb_symps_1_int1_d25","numb_symps_1_int1_d26","numb_symps_1_int1_d27","numb_symps_1_int1_d28","numb_symps_1_int1_d29","numb_symps_1_int1_d30","numb_symps_1_int1_d31","numb_symps_1_int1_d32","numb_symps_1_int1_d33","numb_symps_1_int1_d34","numb_symps_1_int1_d35", "numb_symps_1_int1_d36")], na.rm=TRUE)
+
+Techs$min10 <- rowMeans(Techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9","hr_2_int1_d5_d10","hr_2_int1_d5_d11","hr_2_int1_d5_d12","hr_2_int1_d5_d13","hr_2_int1_d5_d14","hr_2_int1_d5_d15","hr_2_int1_d5_d16","hr_2_int1_d5_d17","hr_2_int1_d5_d18","hr_2_int1_d5_d19","hr_2_int1_d5_d20","hr_2_int1_d5_d21","hr_2_int1_d5_d22","hr_2_int1_d5_d23","hr_2_int1_d5_d24","hr_2_int1_d5_d25","hr_2_int1_d5_d26","hr_2_int1_d5_d27","hr_2_int1_d5_d28","hr_2_int1_d5_d29","hr_2_int1_d5_d30","hr_2_int1_d5_d31","hr_2_int1_d5_d32","hr_2_int1_d5_d33","hr_2_int1_d5_d34","hr_2_int1_d5_d35","hr_2_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min10_hr_perc <- rowMeans(Techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6","hr_max_2_int1_d5_d7","hr_max_2_int1_d5_d8","hr_max_2_int1_d5_d9","hr_max_2_int1_d5_d10","hr_max_2_int1_d5_d11","hr_max_2_int1_d5_d12","hr_max_2_int1_d5_d13","hr_max_2_int1_d5_d14","hr_max_2_int1_d5_d15","hr_max_2_int1_d5_d16","hr_max_2_int1_d5_d17","hr_max_2_int1_d5_d18","hr_max_2_int1_d5_d19","hr_max_2_int1_d5_d20","hr_max_2_int1_d5_d21","hr_max_2_int1_d5_d22","hr_max_2_int1_d5_d23","hr_max_2_int1_d5_d24","hr_max_2_int1_d5_d25","hr_max_2_int1_d5_d26","hr_max_2_int1_d5_d27","hr_max_2_int1_d5_d28","hr_max_2_int1_d5_d29","hr_max_2_int1_d5_d30","hr_max_2_int1_d5_d31","hr_max_2_int1_d5_d32","hr_max_2_int1_d5_d33","hr_max_2_int1_d5_d34","hr_max_2_int1_d5_d35","hr_max_2_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min10_chng_symp <- rowMeans(Techs[, c("severity_change_2_int1","severity_change_2_int1_d2","severity_change_2_int1_d3", "severity_change_2_int1_d4", "severity_change_2_int1_d5","severity_change_2_int1_d6","severity_change_2_int1_d7","severity_change_2_int1_d8","severity_change_2_int1_d9","severity_change_2_int1_d10","severity_change_2_int1_d11","severity_change_2_int1_d12","severity_change_2_int1_d13","severity_change_2_int1_d14","severity_change_2_int1_d15","severity_change_2_int1_d16","severity_change_2_int1_d17","severity_change_2_int1_d18","severity_change_2_int1_d19","severity_change_2_int1_d20","severity_change_2_int1_d21","severity_change_2_int1_d22","severity_change_2_int1_d23","severity_change_2_int1_d24","severity_change_2_int1_d25","severity_change_2_int1_d26","severity_change_2_int1_d27","severity_change_2_int1_d28","severity_change_2_int1_d29","severity_change_2_int1_d30","severity_change_2_int1_d31","severity_change_2_int1_d32","severity_change_2_int1_d33","severity_change_2_int1_d34","severity_change_2_int1_d35","severity_change_2_int1_d36")], na.rm=TRUE)
+
+Techs$min10_numb_symps <- rowMeans(Techs[, c("numb_symps_2_int1","numb_symps_2_int1_d2","numb_symps_2_int1_d3","numb_symps_2_int1_d4", "numb_symps_2_int1_d5", "numb_symps_2_int1_d6","numb_symps_2_int1_d7","numb_symps_2_int1_d8","numb_symps_2_int1_d9","numb_symps_2_int1_d10","numb_symps_2_int1_d11","numb_symps_2_int1_d12","numb_symps_2_int1_d13","numb_symps_2_int1_d14","numb_symps_2_int1_d15","numb_symps_2_int1_d16","numb_symps_2_int1_d17","numb_symps_2_int1_d18","numb_symps_2_int1_d19","numb_symps_2_int1_d20","numb_symps_2_int1_d21","numb_symps_2_int1_d22","numb_symps_2_int1_d23","numb_symps_2_int1_d24","numb_symps_2_int1_d25","numb_symps_2_int1_d26","numb_symps_2_int1_d27","numb_symps_2_int1_d28","numb_symps_2_int1_d29","numb_symps_2_int1_d30","numb_symps_2_int1_d31","numb_symps_2_int1_d32","numb_symps_2_int1_d33","numb_symps_2_int1_d34","numb_symps_2_int1_d35", "numb_symps_2_int1_d36")], na.rm=TRUE)
+
+Techs$min15 <- rowMeans(Techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6","hr_3_int1_d5_d7","hr_3_int1_d5_d8","hr_3_int1_d5_d9","hr_3_int1_d5_d10","hr_3_int1_d5_d11","hr_3_int1_d5_d12","hr_3_int1_d5_d13","hr_3_int1_d5_d14","hr_3_int1_d5_d15","hr_3_int1_d5_d16","hr_3_int1_d5_d17","hr_3_int1_d5_d18","hr_3_int1_d5_d19","hr_3_int1_d5_d20","hr_3_int1_d5_d21","hr_3_int1_d5_d22","hr_3_int1_d5_d23","hr_3_int1_d5_d24","hr_3_int1_d5_d25","hr_3_int1_d5_d26","hr_3_int1_d5_d27","hr_3_int1_d5_d28","hr_3_int1_d5_d29","hr_3_int1_d5_d30","hr_3_int1_d5_d31","hr_3_int1_d5_d32","hr_3_int1_d5_d33","hr_3_int1_d5_d34","hr_3_int1_d5_d35","hr_3_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min15_hr_perc <- rowMeans(Techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6","hr_max_3_int1_d5_d7","hr_max_3_int1_d5_d8","hr_max_3_int1_d5_d9","hr_max_3_int1_d5_d10","hr_max_3_int1_d5_d11","hr_max_3_int1_d5_d12","hr_max_3_int1_d5_d13","hr_max_3_int1_d5_d14","hr_max_3_int1_d5_d15","hr_max_3_int1_d5_d16","hr_max_3_int1_d5_d17","hr_max_3_int1_d5_d18","hr_max_3_int1_d5_d19","hr_max_3_int1_d5_d20","hr_max_3_int1_d5_d21","hr_max_3_int1_d5_d22","hr_max_3_int1_d5_d23","hr_max_3_int1_d5_d24","hr_max_3_int1_d5_d25","hr_max_3_int1_d5_d26","hr_max_3_int1_d5_d27","hr_max_3_int1_d5_d28","hr_max_3_int1_d5_d29","hr_max_3_int1_d5_d30","hr_max_3_int1_d5_d31","hr_max_3_int1_d5_d32","hr_max_3_int1_d5_d33","hr_max_3_int1_d5_d34","hr_max_3_int1_d5_d35","hr_max_3_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min15_chng_symp <- rowMeans(Techs[, c("severity_change_3_int1","severity_change_3_int1_d2","severity_change_3_int1_d3", "severity_change_3_int1_d4", "severity_change_3_int1_d5","severity_change_3_int1_d6","severity_change_3_int1_d7","severity_change_3_int1_d8","severity_change_3_int1_d9","severity_change_3_int1_d10","severity_change_3_int1_d11","severity_change_3_int1_d12","severity_change_3_int1_d13","severity_change_3_int1_d14","severity_change_3_int1_d15","severity_change_3_int1_d16","severity_change_3_int1_d17","severity_change_3_int1_d18","severity_change_3_int1_d19","severity_change_3_int1_d20","severity_change_3_int1_d21","severity_change_3_int1_d22","severity_change_3_int1_d23","severity_change_3_int1_d24","severity_change_3_int1_d25","severity_change_3_int1_d26","severity_change_3_int1_d27","severity_change_3_int1_d28","severity_change_3_int1_d29","severity_change_3_int1_d30","severity_change_3_int1_d31","severity_change_3_int1_d32","severity_change_3_int1_d33","severity_change_3_int1_d34","severity_change_3_int1_d35","severity_change_3_int1_d36")], na.rm=TRUE)
+
+Techs$min15_numb_symps <- rowMeans(Techs[, c("numb_symps_3_int1","numb_symps_3_int1_d2","numb_symps_3_int1_d3","numb_symps_3_int1_d4", "numb_symps_3_int1_d5", "numb_symps_3_int1_d6","numb_symps_3_int1_d7","numb_symps_3_int1_d8","numb_symps_3_int1_d9","numb_symps_3_int1_d10","numb_symps_3_int1_d11","numb_symps_3_int1_d12","numb_symps_3_int1_d13","numb_symps_3_int1_d14","numb_symps_3_int1_d15","numb_symps_3_int1_d16","numb_symps_3_int1_d17","numb_symps_3_int1_d18","numb_symps_3_int1_d19","numb_symps_3_int1_d20","numb_symps_3_int1_d21","numb_symps_3_int1_d22","numb_symps_3_int1_d23","numb_symps_3_int1_d24","numb_symps_3_int1_d25","numb_symps_3_int1_d26","numb_symps_3_int1_d27","numb_symps_3_int1_d28","numb_symps_3_int1_d29","numb_symps_3_int1_d30","numb_symps_3_int1_d31","numb_symps_3_int1_d32","numb_symps_3_int1_d33","numb_symps_3_int1_d34","numb_symps_3_int1_d35", "numb_symps_3_int1_d36")], na.rm=TRUE)
+
+Techs$min20 <- rowMeans(Techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6","hr_4_int1_d5_d7","hr_4_int1_d5_d8","hr_4_int1_d5_d9","hr_4_int1_d5_d10","hr_4_int1_d5_d11","hr_4_int1_d5_d12","hr_4_int1_d5_d13","hr_4_int1_d5_d14","hr_4_int1_d5_d15","hr_4_int1_d5_d16","hr_4_int1_d5_d17","hr_4_int1_d5_d18","hr_4_int1_d5_d19","hr_4_int1_d5_d20","hr_4_int1_d5_d21","hr_4_int1_d5_d22","hr_4_int1_d5_d23","hr_4_int1_d5_d24","hr_4_int1_d5_d25","hr_4_int1_d5_d26","hr_4_int1_d5_d27","hr_4_int1_d5_d28","hr_4_int1_d5_d29","hr_4_int1_d5_d30","hr_4_int1_d5_d31","hr_4_int1_d5_d32","hr_4_int1_d5_d33","hr_4_int1_d5_d34","hr_4_int1_d5_d35","hr_4_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min20_hr_perc <- rowMeans(Techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6","hr_max_4_int1_d5_d7","hr_max_4_int1_d5_d8","hr_max_4_int1_d5_d9","hr_max_4_int1_d5_d10","hr_max_4_int1_d5_d11","hr_max_4_int1_d5_d12","hr_max_4_int1_d5_d13","hr_max_4_int1_d5_d14","hr_max_4_int1_d5_d15","hr_max_4_int1_d5_d16","hr_max_4_int1_d5_d17","hr_max_4_int1_d5_d18","hr_max_4_int1_d5_d19","hr_max_4_int1_d5_d20","hr_max_4_int1_d5_d21","hr_max_4_int1_d5_d22","hr_max_4_int1_d5_d23","hr_max_4_int1_d5_d24","hr_max_4_int1_d5_d25","hr_max_4_int1_d5_d26","hr_max_4_int1_d5_d27","hr_max_4_int1_d5_d28","hr_max_4_int1_d5_d29","hr_max_4_int1_d5_d30","hr_max_4_int1_d5_d31","hr_max_4_int1_d5_d32","hr_max_4_int1_d5_d33","hr_max_4_int1_d5_d34","hr_max_4_int1_d5_d35","hr_max_4_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min20_chng_symp <- rowMeans(Techs[, c("severity_change_4_int1","severity_change_4_int1_d2","severity_change_4_int1_d3", "severity_change_4_int1_d4", "severity_change_4_int1_d5","severity_change_4_int1_d6","severity_change_4_int1_d7","severity_change_4_int1_d8","severity_change_4_int1_d9","severity_change_4_int1_d10","severity_change_4_int1_d11","severity_change_4_int1_d12","severity_change_4_int1_d13","severity_change_4_int1_d14","severity_change_4_int1_d15","severity_change_4_int1_d16","severity_change_4_int1_d17","severity_change_4_int1_d18","severity_change_4_int1_d19","severity_change_4_int1_d20","severity_change_4_int1_d21","severity_change_4_int1_d22","severity_change_4_int1_d23","severity_change_4_int1_d24","severity_change_4_int1_d25","severity_change_4_int1_d26","severity_change_4_int1_d27","severity_change_4_int1_d28","severity_change_4_int1_d29","severity_change_4_int1_d30","severity_change_4_int1_d31","severity_change_4_int1_d32","severity_change_4_int1_d33","severity_change_4_int1_d34","severity_change_4_int1_d35","severity_change_4_int1_d36")], na.rm=TRUE)
+
+Techs$min20_numb_symps <- rowMeans(Techs[, c("numb_symps_4_int1","numb_symps_4_int1_d2","numb_symps_4_int1_d3","numb_symps_4_int1_d4", "numb_symps_4_int1_d5", "numb_symps_4_int1_d6","numb_symps_4_int1_d7","numb_symps_4_int1_d8","numb_symps_4_int1_d9","numb_symps_4_int1_d10","numb_symps_4_int1_d11","numb_symps_4_int1_d12","numb_symps_4_int1_d13","numb_symps_4_int1_d14","numb_symps_4_int1_d15","numb_symps_4_int1_d16","numb_symps_4_int1_d17","numb_symps_4_int1_d18","numb_symps_4_int1_d19","numb_symps_4_int1_d20","numb_symps_4_int1_d21","numb_symps_4_int1_d22","numb_symps_4_int1_d23","numb_symps_4_int1_d24","numb_symps_4_int1_d25","numb_symps_4_int1_d26","numb_symps_4_int1_d27","numb_symps_4_int1_d28","numb_symps_4_int1_d29","numb_symps_4_int1_d30","numb_symps_4_int1_d31","numb_symps_4_int1_d32","numb_symps_4_int1_d33","numb_symps_4_int1_d34","numb_symps_4_int1_d35", "numb_symps_4_int1_d36")], na.rm=TRUE)
+
+Techs$min25 <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9","hr_5_int1_d5_d10","hr_5_int1_d5_d11","hr_5_int1_d5_d12","hr_5_int1_d5_d13","hr_5_int1_d5_d14","hr_5_int1_d5_d15","hr_5_int1_d5_d16","hr_5_int1_d5_d17","hr_5_int1_d5_d18","hr_5_int1_d5_d19","hr_5_int1_d5_d20","hr_5_int1_d5_d21","hr_5_int1_d5_d22","hr_5_int1_d5_d23","hr_5_int1_d5_d24","hr_5_int1_d5_d25","hr_5_int1_d5_d26","hr_5_int1_d5_d27","hr_5_int1_d5_d28","hr_5_int1_d5_d29","hr_5_int1_d5_d30","hr_5_int1_d5_d31","hr_5_int1_d5_d32","hr_5_int1_d5_d33","hr_5_int1_d5_d34","hr_5_int1_d5_d35","hr_5_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min25_hr_perc <- rowMeans(Techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6","hr_max_5_int1_d5_d7","hr_max_5_int1_d5_d8","hr_max_5_int1_d5_d9","hr_max_5_int1_d5_d10","hr_max_5_int1_d5_d11","hr_max_5_int1_d5_d12","hr_max_5_int1_d5_d13","hr_max_5_int1_d5_d14","hr_max_5_int1_d5_d15","hr_max_5_int1_d5_d16","hr_max_5_int1_d5_d17","hr_max_5_int1_d5_d18","hr_max_5_int1_d5_d19","hr_max_5_int1_d5_d20","hr_max_5_int1_d5_d21","hr_max_5_int1_d5_d22","hr_max_5_int1_d5_d23","hr_max_5_int1_d5_d24","hr_max_5_int1_d5_d25","hr_max_5_int1_d5_d26","hr_max_5_int1_d5_d27","hr_max_5_int1_d5_d28","hr_max_5_int1_d5_d29","hr_max_5_int1_d5_d30","hr_max_5_int1_d5_d31","hr_max_5_int1_d5_d32","hr_max_5_int1_d5_d33","hr_max_5_int1_d5_d34","hr_max_5_int1_d5_d35","hr_max_5_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min25_chng_symp <- rowMeans(Techs[, c("severity_change_5_int1","severity_change_5_int1_d2","severity_change_5_int1_d3", "severity_change_5_int1_d4", "severity_change_5_int1_d5","severity_change_5_int1_d6","severity_change_5_int1_d7","severity_change_5_int1_d8","severity_change_5_int1_d9","severity_change_5_int1_d10","severity_change_5_int1_d11","severity_change_5_int1_d12","severity_change_5_int1_d13","severity_change_5_int1_d14","severity_change_5_int1_d15","severity_change_5_int1_d16","severity_change_5_int1_d17","severity_change_5_int1_d18","severity_change_5_int1_d19","severity_change_5_int1_d20","severity_change_5_int1_d21","severity_change_5_int1_d22","severity_change_5_int1_d23","severity_change_5_int1_d24","severity_change_5_int1_d25","severity_change_5_int1_d26","severity_change_5_int1_d27","severity_change_5_int1_d28","severity_change_5_int1_d29","severity_change_5_int1_d30","severity_change_5_int1_d31","severity_change_5_int1_d32","severity_change_5_int1_d33","severity_change_5_int1_d34","severity_change_5_int1_d35","severity_change_5_int1_d36")], na.rm=TRUE)
+
+Techs$min25_numb_symps <- rowMeans(Techs[, c("numb_symps_5_int1","numb_symps_5_int1_d2","numb_symps_5_int1_d3","numb_symps_5_int1_d4", "numb_symps_5_int1_d5", "numb_symps_5_int1_d6","numb_symps_5_int1_d7","numb_symps_5_int1_d8","numb_symps_5_int1_d9","numb_symps_5_int1_d10","numb_symps_5_int1_d11","numb_symps_5_int1_d12","numb_symps_5_int1_d13","numb_symps_5_int1_d14","numb_symps_5_int1_d15","numb_symps_5_int1_d16","numb_symps_5_int1_d17","numb_symps_5_int1_d18","numb_symps_5_int1_d19","numb_symps_5_int1_d20","numb_symps_5_int1_d21","numb_symps_5_int1_d22","numb_symps_5_int1_d23","numb_symps_5_int1_d24","numb_symps_5_int1_d25","numb_symps_5_int1_d26","numb_symps_5_int1_d27","numb_symps_5_int1_d28","numb_symps_5_int1_d29","numb_symps_5_int1_d30","numb_symps_5_int1_d31","numb_symps_5_int1_d32","numb_symps_5_int1_d33","numb_symps_5_int1_d34","numb_symps_5_int1_d35", "numb_symps_5_int1_d36")], na.rm=TRUE)
+
+Techs$min30 <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9","hr_6_int1_d5_d10","hr_6_int1_d5_d11","hr_6_int1_d5_d12","hr_6_int1_d5_d13","hr_6_int1_d5_d14","hr_6_int1_d5_d15","hr_6_int1_d5_d16","hr_6_int1_d5_d17","hr_6_int1_d5_d18","hr_6_int1_d5_d19","hr_6_int1_d5_d20","hr_6_int1_d5_d21","hr_6_int1_d5_d22","hr_6_int1_d5_d23","hr_6_int1_d5_d24","hr_6_int1_d5_d25","hr_6_int1_d5_d26","hr_6_int1_d5_d27","hr_6_int1_d5_d28","hr_6_int1_d5_d29","hr_6_int1_d5_d30","hr_6_int1_d5_d31","hr_6_int1_d5_d32","hr_6_int1_d5_d33","hr_6_int1_d5_d34","hr_6_int1_d5_d35","hr_6_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min30_hr_perc <- rowMeans(Techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6","hr_max_6_int1_d5_d7","hr_max_6_int1_d5_d8","hr_max_6_int1_d5_d9","hr_max_6_int1_d5_d10","hr_max_6_int1_d5_d11","hr_max_6_int1_d5_d12","hr_max_6_int1_d5_d13","hr_max_6_int1_d5_d14","hr_max_6_int1_d5_d15","hr_max_6_int1_d5_d16","hr_max_6_int1_d5_d17","hr_max_6_int1_d5_d18","hr_max_6_int1_d5_d19","hr_max_6_int1_d5_d20","hr_max_6_int1_d5_d21","hr_max_6_int1_d5_d22","hr_max_6_int1_d5_d23","hr_max_6_int1_d5_d24","hr_max_6_int1_d5_d25","hr_max_6_int1_d5_d26","hr_max_6_int1_d5_d27","hr_max_6_int1_d5_d28","hr_max_6_int1_d5_d29","hr_max_6_int1_d5_d30","hr_max_6_int1_d5_d31","hr_max_6_int1_d5_d32","hr_max_6_int1_d5_d33","hr_max_6_int1_d5_d34","hr_max_6_int1_d5_d35","hr_max_6_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min30_chng_symp <- rowMeans(Techs[, c("severity_change_6_int1","severity_change_6_int1_d2","severity_change_6_int1_d3", "severity_change_6_int1_d4", "severity_change_6_int1_d5","severity_change_6_int1_d6","severity_change_6_int1_d7","severity_change_6_int1_d8","severity_change_6_int1_d9","severity_change_6_int1_d10","severity_change_6_int1_d11","severity_change_6_int1_d12","severity_change_6_int1_d13","severity_change_6_int1_d14","severity_change_6_int1_d15","severity_change_6_int1_d16","severity_change_6_int1_d17","severity_change_6_int1_d18","severity_change_6_int1_d19","severity_change_6_int1_d20","severity_change_6_int1_d21","severity_change_6_int1_d22","severity_change_6_int1_d23","severity_change_6_int1_d24","severity_change_6_int1_d25","severity_change_6_int1_d26","severity_change_6_int1_d27","severity_change_6_int1_d28","severity_change_6_int1_d29","severity_change_6_int1_d30","severity_change_6_int1_d31","severity_change_6_int1_d32","severity_change_6_int1_d33","severity_change_6_int1_d34","severity_change_6_int1_d35","severity_change_6_int1_d36")], na.rm=TRUE)
+
+Techs$min30_numb_symps<- rowMeans(Techs[, c("numb_symps_6_int1","numb_symps_6_int1_d2","numb_symps_6_int1_d3","numb_symps_6_int1_d4", "numb_symps_6_int1_d5", "numb_symps_6_int1_d6","numb_symps_6_int1_d7","numb_symps_6_int1_d8","numb_symps_6_int1_d9","numb_symps_6_int1_d10","numb_symps_6_int1_d11","numb_symps_6_int1_d12","numb_symps_6_int1_d13","numb_symps_6_int1_d14","numb_symps_6_int1_d15","numb_symps_6_int1_d16","numb_symps_6_int1_d17","numb_symps_6_int1_d18","numb_symps_6_int1_d19","numb_symps_6_int1_d20","numb_symps_6_int1_d21","numb_symps_6_int1_d22","numb_symps_6_int1_d23","numb_symps_6_int1_d24","numb_symps_6_int1_d25","numb_symps_6_int1_d26","numb_symps_6_int1_d27","numb_symps_6_int1_d28","numb_symps_6_int1_d29","numb_symps_6_int1_d30","numb_symps_6_int1_d31","numb_symps_6_int1_d32","numb_symps_6_int1_d33","numb_symps_6_int1_d34","numb_symps_6_int1_d35", "numb_symps_6_int1_d36")], na.rm=TRUE)
+```
 
 
-Techs$min05 <- rowMeans(Techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9")], na.rm=TRUE)
+```{r}
 
-Techs$min05_hr_perc <- rowMeans(Techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6")], na.rm=TRUE)
+# MONTH 1
 
-Techs$min05_chng_symp <- rowMeans(Techs[, c("symp_change_1_int1_d5_d1","symp_change_1_int1_d5_d2","symp_change_1_int1_d5_d3","symp_change_1_int1_d5_d4", "symp_change_1_int1_d5_d5", "symp_change_1_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_mon1 <- rowMeans(Techs[, c("baseline_hr_int1_d5","baseline_hr_int1_d5_d2","baseline_hr_int1_d5_d3","baseline_hr_int1_d5_d4","baseline_hr_int1_d5_d5","baseline_hr_int1_d5_d6","baseline_hr_int1_d5_d7","baseline_hr_int1_d5_d8","baseline_hr_int1_d5_d9","baseline_hr_int1_d5_d10","baseline_hr_int1_d5_d11","baseline_hr_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min05_severity <- rowMeans(Techs[, c("num_sev_1_int1_d5_d1","num_sev_1_int1_d5_d2","num_sev_1_int1_d5_d3","num_sev_1_int1_d5_d4", "num_sev_1_int1_d5_d5", "num_sev_1_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5","hr_max_baseline_int1_d5_d2","hr_max_baseline_int1_d5_d3","hr_max_baseline_int1_d5_d4","hr_max_baseline_int1_d5_d5","hr_max_baseline_int1_d5_d6","hr_max_baseline_int1_d5_d7","hr_max_baseline_int1_d5_d8","hr_max_baseline_int1_d5_d9","hr_max_baseline_int1_d5_d10","hr_max_baseline_int1_d5_d11","hr_max_baseline_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min10 <- rowMeans(Techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9")], na.rm=TRUE)
+Techs$baseline_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_int1","severity_change_int1_d2","severity_change_int1_d3", "severity_change_int1_d4", "severity_change_int1_d5","severity_change_int1_d6","severity_change_int1_d7","severity_change_int1_d8","severity_change_int1_d9","severity_change_int1_d10","severity_change_int1_d11","severity_change_int1_d12")], na.rm=TRUE)
 
-Techs$min10_hr_perc <- rowMeans(Techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6")], na.rm=TRUE)
+Techs$baseline_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_int1","numb_symps_int1_d2","numb_symps_int1_d3","numb_symps_int1_d4", "numb_symps_int1_d5", "numb_symps_int1_d6","numb_symps_int1_d7","numb_symps_int1_d8","numb_symps_int1_d9","numb_symps_int1_d10","numb_symps_int1_d11","numb_symps_int1_d12")], na.rm=TRUE)
 
-Techs$min10_chng_symp <- rowMeans(Techs[, c("symp_change_2_int1_d5_d1","symp_change_2_int1_d5_d2","symp_change_2_int1_d5_d3","symp_change_2_int1_d5_d4", "symp_change_2_int1_d5_d5", "symp_change_2_int1_d5_d6")], na.rm=TRUE)
+Techs$min05_mon1 <- rowMeans(Techs[, c("hr_1_int1_d5","hr_1_int1_d5_d2","hr_1_int1_d5_d3","hr_1_int1_d5_d4","hr_1_int1_d5_d5","hr_1_int1_d5_d6","hr_1_int1_d5_d7","hr_1_int1_d5_d8","hr_1_int1_d5_d9","hr_1_int1_d5_d10","hr_1_int1_d5_d11","hr_1_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min10_severity <- rowMeans(Techs[, c("num_sev_2_int1_d5_d1","num_sev_2_int1_d5_d2","num_sev_2_int1_d5_d3","num_sev_2_int1_d5_d4", "num_sev_2_int1_d5_d5", "num_sev_2_int1_d5_d6")], na.rm=TRUE)
+Techs$min05_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_1_int1_d5","hr_max_1_int1_d5_d2","hr_max_1_int1_d5_d3","hr_max_1_int1_d5_d4","hr_max_1_int1_d5_d5","hr_max_1_int1_d5_d6","hr_max_1_int1_d5_d7","hr_max_1_int1_d5_d8","hr_max_1_int1_d5_d9","hr_max_1_int1_d5_d10","hr_max_1_int1_d5_d11","hr_max_1_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min15 <- rowMeans(Techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6")], na.rm=TRUE)
+Techs$min05_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_1_int1","severity_change_1_int1_d2","severity_change_1_int1_d3", "severity_change_1_int1_d4", "severity_change_1_int1_d5","severity_change_1_int1_d6","severity_change_1_int1_d7","severity_change_1_int1_d8","severity_change_1_int1_d9","severity_change_1_int1_d10","severity_change_1_int1_d11","severity_change_1_int1_d12")], na.rm=TRUE)
 
-Techs$min15_hr_perc <- rowMeans(Techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6")], na.rm=TRUE)
+Techs$min05_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_1_int1","numb_symps_1_int1_d2","numb_symps_1_int1_d3","numb_symps_1_int1_d4", "numb_symps_1_int1_d5", "numb_symps_1_int1_d6","numb_symps_1_int1_d7","numb_symps_1_int1_d8","numb_symps_1_int1_d9","numb_symps_1_int1_d10","numb_symps_1_int1_d11","numb_symps_1_int1_d12")], na.rm=TRUE)
 
-Techs$min15_chng_symp <- rowMeans(Techs[, c("symp_change_3_int1_d5_d1","symp_change_3_int1_d5_d2","symp_change_3_int1_d5_d3","symp_change_3_int1_d5_d4", "symp_change_3_int1_d5_d5", "symp_change_3_int1_d5_d6")], na.rm=TRUE)
+Techs$min10_mon1 <- rowMeans(Techs[, c("hr_2_int1_d5","hr_2_int1_d5_d2","hr_2_int1_d5_d3","hr_2_int1_d5_d4","hr_2_int1_d5_d5","hr_2_int1_d5_d6","hr_2_int1_d5_d7","hr_2_int1_d5_d8","hr_2_int1_d5_d9","hr_2_int1_d5_d10","hr_2_int1_d5_d11","hr_2_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min15_severity <- rowMeans(Techs[, c("num_sev_3_int1_d5_d1","num_sev_3_int1_d5_d2","num_sev_3_int1_d5_d3","num_sev_3_int1_d5_d4", "num_sev_3_int1_d5_d5", "num_sev_3_int1_d5_d6")], na.rm=TRUE)
+Techs$min10_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_2_int1_d5","hr_max_2_int1_d5_d2","hr_max_2_int1_d5_d3","hr_max_2_int1_d5_d4","hr_max_2_int1_d5_d5","hr_max_2_int1_d5_d6","hr_max_2_int1_d5_d7","hr_max_2_int1_d5_d8","hr_max_2_int1_d5_d9","hr_max_2_int1_d5_d10","hr_max_2_int1_d5_d11","hr_max_2_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min20 <- rowMeans(Techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6")], na.rm=TRUE)
+Techs$min10_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_2_int1","severity_change_2_int1_d2","severity_change_2_int1_d3", "severity_change_2_int1_d4", "severity_change_2_int1_d5","severity_change_2_int1_d6","severity_change_2_int1_d7","severity_change_2_int1_d8","severity_change_2_int1_d9","severity_change_2_int1_d10","severity_change_2_int1_d11","severity_change_2_int1_d12")], na.rm=TRUE)
 
-Techs$min20_hr_perc <- rowMeans(Techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6")], na.rm=TRUE)
+Techs$min10_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_2_int1","numb_symps_2_int1_d2","numb_symps_2_int1_d3","numb_symps_2_int1_d4", "numb_symps_2_int1_d5", "numb_symps_2_int1_d6","numb_symps_2_int1_d7","numb_symps_2_int1_d8","numb_symps_2_int1_d9","numb_symps_2_int1_d10","numb_symps_2_int1_d11","numb_symps_2_int1_d12")], na.rm=TRUE)
 
-Techs$min20_chng_symp <- rowMeans(Techs[, c("symp_change_4_int1_d5_d1","symp_change_4_int1_d5_d2","symp_change_4_int1_d5_d3","symp_change_4_int1_d5_d4", "symp_change_4_int1_d5_d5", "symp_change_4_int1_d5_d6")], na.rm=TRUE)
+Techs$min15_mon1 <- rowMeans(Techs[, c("hr_3_int1_d5","hr_3_int1_d5_d2","hr_3_int1_d5_d3","hr_3_int1_d5_d4","hr_3_int1_d5_d5","hr_3_int1_d5_d6","hr_3_int1_d5_d7","hr_3_int1_d5_d8","hr_3_int1_d5_d9","hr_3_int1_d5_d10","hr_3_int1_d5_d11","hr_3_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min20_severity <- rowMeans(Techs[, c("num_sev_4_int1_d5_d1","num_sev_4_int1_d5_d2","num_sev_4_int1_d5_d3","num_sev_4_int1_d5_d4", "num_sev_4_int1_d5_d5", "num_sev_4_int1_d5_d6")], na.rm=TRUE)
+Techs$min15_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_3_int1_d5","hr_max_3_int1_d5_d2","hr_max_3_int1_d5_d3","hr_max_3_int1_d5_d4","hr_max_3_int1_d5_d5","hr_max_3_int1_d5_d6","hr_max_3_int1_d5_d7","hr_max_3_int1_d5_d8","hr_max_3_int1_d5_d9","hr_max_3_int1_d5_d10","hr_max_3_int1_d5_d11","hr_max_3_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min25 <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6")], na.rm=TRUE)
+Techs$min15_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_3_int1","severity_change_3_int1_d2","severity_change_3_int1_d3", "severity_change_3_int1_d4", "severity_change_3_int1_d5","severity_change_3_int1_d6","severity_change_3_int1_d7","severity_change_3_int1_d8","severity_change_3_int1_d9","severity_change_3_int1_d10","severity_change_3_int1_d11","severity_change_3_int1_d12")], na.rm=TRUE)
 
-Techs$min25_hr_perc <- rowMeans(Techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6")], na.rm=TRUE)
+Techs$min15_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_3_int1","numb_symps_3_int1_d2","numb_symps_3_int1_d3","numb_symps_3_int1_d4", "numb_symps_3_int1_d5", "numb_symps_3_int1_d6","numb_symps_3_int1_d7","numb_symps_3_int1_d8","numb_symps_3_int1_d9","numb_symps_3_int1_d10","numb_symps_3_int1_d11","numb_symps_3_int1_d12")], na.rm=TRUE)
 
-Techs$min25_chng_symp <- rowMeans(Techs[, c("symp_change_5_int1_d5_d1","symp_change_5_int1_d5_d2","symp_change_5_int1_d5_d3","symp_change_5_int1_d5_d4", "symp_change_5_int1_d5_d5", "symp_change_5_int1_d5_d6")], na.rm=TRUE)
+Techs$min20_mon1 <- rowMeans(Techs[, c("hr_4_int1_d5","hr_4_int1_d5_d2","hr_4_int1_d5_d3","hr_4_int1_d5_d4","hr_4_int1_d5_d5","hr_4_int1_d5_d6","hr_4_int1_d5_d7","hr_4_int1_d5_d8","hr_4_int1_d5_d9","hr_4_int1_d5_d10","hr_4_int1_d5_d11","hr_4_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min25_severity <- rowMeans(Techs[, c("num_sev_5_int1_d5_d1","num_sev_5_int1_d5_d2","num_sev_5_int1_d5_d3","num_sev_5_int1_d5_d4", "num_sev_5_int1_d5_d5", "num_sev_5_int1_d5_d6")], na.rm=TRUE)
+Techs$min20_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_4_int1_d5","hr_max_4_int1_d5_d2","hr_max_4_int1_d5_d3","hr_max_4_int1_d5_d4","hr_max_4_int1_d5_d5","hr_max_4_int1_d5_d6","hr_max_4_int1_d5_d7","hr_max_4_int1_d5_d8","hr_max_4_int1_d5_d9","hr_max_4_int1_d5_d10","hr_max_4_int1_d5_d11","hr_max_4_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min30 <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6")], na.rm=TRUE)
+Techs$min20_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_4_int1","severity_change_4_int1_d2","severity_change_4_int1_d3", "severity_change_4_int1_d4", "severity_change_4_int1_d5","severity_change_4_int1_d6","severity_change_4_int1_d7","severity_change_4_int1_d8","severity_change_4_int1_d9","severity_change_4_int1_d10","severity_change_4_int1_d11","severity_change_4_int1_d12")], na.rm=TRUE)
 
-Techs$min30_hr_perc <- rowMeans(Techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6")], na.rm=TRUE)
+Techs$min20_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_4_int1","numb_symps_4_int1_d2","numb_symps_4_int1_d3","numb_symps_4_int1_d4", "numb_symps_4_int1_d5", "numb_symps_4_int1_d6","numb_symps_4_int1_d7","numb_symps_4_int1_d8","numb_symps_4_int1_d9","numb_symps_4_int1_d10","numb_symps_4_int1_d11","numb_symps_4_int1_d12")], na.rm=TRUE)
 
-Techs$min30_chng_symp <- rowMeans(Techs[, c("symp_change_6_int1_d5_d1","symp_change_6_int1_d5_d2","symp_change_6_int1_d5_d3","symp_change_6_int1_d5_d4", "symp_change_6_int1_d5_d5", "symp_change_6_int1_d5_d6")], na.rm=TRUE)
+Techs$min25_mon1 <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9","hr_5_int1_d5_d10","hr_5_int1_d5_d11","hr_5_int1_d5_d12")], na.rm=TRUE)
 
-Techs$min30_severity <- rowMeans(Techs[, c("num_sev_6_int1_d5_d1","num_sev_6_int1_d5_d2","num_sev_6_int1_d5_d3","num_sev_6_int1_d5_d4", "num_sev_6_int1_d5_d5", "num_sev_6_int1_d5_d6")], na.rm=TRUE)
+Techs$min25_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_5_int1_d5","hr_max_5_int1_d5_d2","hr_max_5_int1_d5_d3","hr_max_5_int1_d5_d4","hr_max_5_int1_d5_d5","hr_max_5_int1_d5_d6","hr_max_5_int1_d5_d7","hr_max_5_int1_d5_d8","hr_max_5_int1_d5_d9","hr_max_5_int1_d5_d10","hr_max_5_int1_d5_d11","hr_max_5_int1_d5_d12")], na.rm=TRUE)
 
- Techs <- Techs %>% 
-dplyr::rename(participant = name)
+Techs$min25_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_5_int1","severity_change_5_int1_d2","severity_change_5_int1_d3", "severity_change_5_int1_d4", "severity_change_5_int1_d5","severity_change_5_int1_d6","severity_change_5_int1_d7","severity_change_5_int1_d8","severity_change_5_int1_d9","severity_change_5_int1_d10","severity_change_5_int1_d11","severity_change_5_int1_d12")], na.rm=TRUE)
+
+Techs$min25_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_5_int1","numb_symps_5_int1_d2","numb_symps_5_int1_d3","numb_symps_5_int1_d4", "numb_symps_5_int1_d5", "numb_symps_5_int1_d6","numb_symps_5_int1_d7","numb_symps_5_int1_d8","numb_symps_5_int1_d9","numb_symps_5_int1_d10","numb_symps_5_int1_d11","numb_symps_5_int1_d12")], na.rm=TRUE)
+
+Techs$min30_mon1 <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9","hr_6_int1_d5_d10","hr_6_int1_d5_d11","hr_6_int1_d5_d12")], na.rm=TRUE)
+
+Techs$min30_hr_perc_mon1 <- rowMeans(Techs[ , c("hr_max_6_int1_d5","hr_max_6_int1_d5_d2","hr_max_6_int1_d5_d3","hr_max_6_int1_d5_d4","hr_max_6_int1_d5_d5","hr_max_6_int1_d5_d6","hr_max_6_int1_d5_d7","hr_max_6_int1_d5_d8","hr_max_6_int1_d5_d9","hr_max_6_int1_d5_d10","hr_max_6_int1_d5_d11","hr_max_6_int1_d5_d12")], na.rm=TRUE)
+
+Techs$min30_chng_symp_mon1 <- rowMeans(Techs[, c("severity_change_6_int1","severity_change_6_int1_d2","severity_change_6_int1_d3", "severity_change_6_int1_d4", "severity_change_6_int1_d5","severity_change_6_int1_d6","severity_change_6_int1_d7","severity_change_6_int1_d8","severity_change_6_int1_d9","severity_change_6_int1_d10","severity_change_6_int1_d11","severity_change_6_int1_d12")], na.rm=TRUE)
+
+Techs$min30_numb_symps_mon1 <- rowMeans(Techs[, c("numb_symps_6_int1","numb_symps_6_int1_d2","numb_symps_6_int1_d3","numb_symps_6_int1_d4", "numb_symps_6_int1_d5", "numb_symps_6_int1_d6","numb_symps_6_int1_d7","numb_symps_6_int1_d8","numb_symps_6_int1_d9","numb_symps_6_int1_d10","numb_symps_6_int1_d11","numb_symps_6_int1_d12")], na.rm=TRUE)
+```
+
+
+```{r}
+
+# MONTH 2
+
+Techs$baseline_mon2 <- rowMeans(Techs[, c("baseline_hr_int1_d5_d13","baseline_hr_int1_d5_d14","baseline_hr_int1_d5_d15","baseline_hr_int1_d5_d16","baseline_hr_int1_d5_d17","baseline_hr_int1_d5_d18","baseline_hr_int1_d5_d19","baseline_hr_int1_d5_d20","baseline_hr_int1_d5_d21","baseline_hr_int1_d5_d22","baseline_hr_int1_d5_d23","baseline_hr_int1_d5_d24")], na.rm=TRUE)
+
+Techs$baseline_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5_d13","hr_max_baseline_int1_d5_d14","hr_max_baseline_int1_d5_d15","hr_max_baseline_int1_d5_d16","hr_max_baseline_int1_d5_d17","hr_max_baseline_int1_d5_d18","hr_max_baseline_int1_d5_d19","hr_max_baseline_int1_d5_d20","hr_max_baseline_int1_d5_d21","hr_max_baseline_int1_d5_d22","hr_max_baseline_int1_d5_d23","hr_max_baseline_int1_d5_d24")], na.rm=TRUE)
+
+Techs$baseline_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_int1_d13","severity_change_int1_d14","severity_change_int1_d15","severity_change_int1_d16","severity_change_int1_d17","severity_change_int1_d18","severity_change_int1_d19","severity_change_int1_d20","severity_change_int1_d21","severity_change_int1_d22","severity_change_int1_d23","severity_change_int1_d24")], na.rm=TRUE)
+
+Techs$baseline_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_int1_d13","numb_symps_int1_d14","numb_symps_int1_d15","numb_symps_int1_d16","numb_symps_int1_d17","numb_symps_int1_d18","numb_symps_int1_d19","numb_symps_int1_d20","numb_symps_int1_d21","numb_symps_int1_d22","numb_symps_int1_d23","numb_symps_int1_d24")], na.rm=TRUE)
+
+Techs$min05_mon2 <- rowMeans(Techs[, c("hr_1_int1_d5_d13","hr_1_int1_d5_d14","hr_1_int1_d5_d15","hr_1_int1_d5_d16","hr_1_int1_d5_d17","hr_1_int1_d5_d18","hr_1_int1_d5_d19","hr_1_int1_d5_d20","hr_1_int1_d5_d21","hr_1_int1_d5_d22","hr_1_int1_d5_d23","hr_1_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min05_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_1_int1_d5_d13","hr_max_1_int1_d5_d14","hr_max_1_int1_d5_d15","hr_max_1_int1_d5_d16","hr_max_1_int1_d5_d17","hr_max_1_int1_d5_d18","hr_max_1_int1_d5_d19","hr_max_1_int1_d5_d20","hr_max_1_int1_d5_d21","hr_max_1_int1_d5_d22","hr_max_1_int1_d5_d23","hr_max_1_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min05_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_1_int1_d13","severity_change_1_int1_d14","severity_change_1_int1_d15","severity_change_1_int1_d16","severity_change_1_int1_d17","severity_change_1_int1_d18","severity_change_1_int1_d19","severity_change_1_int1_d20","severity_change_1_int1_d21","severity_change_1_int1_d22","severity_change_1_int1_d23","severity_change_1_int1_d24")], na.rm=TRUE)
+
+Techs$min05_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_1_int1_d13","numb_symps_1_int1_d14","numb_symps_1_int1_d15","numb_symps_1_int1_d16","numb_symps_1_int1_d17","numb_symps_1_int1_d18","numb_symps_1_int1_d19","numb_symps_1_int1_d20","numb_symps_1_int1_d21","numb_symps_1_int1_d22","numb_symps_1_int1_d23","numb_symps_1_int1_d24")], na.rm=TRUE)
+
+Techs$min10_mon2 <- rowMeans(Techs[, c("hr_2_int1_d5_d13","hr_2_int1_d5_d14","hr_2_int1_d5_d15","hr_2_int1_d5_d16","hr_2_int1_d5_d17","hr_2_int1_d5_d18","hr_2_int1_d5_d19","hr_2_int1_d5_d20","hr_2_int1_d5_d21","hr_2_int1_d5_d22","hr_2_int1_d5_d23","hr_2_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min10_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_2_int1_d5_d13","hr_max_2_int1_d5_d14","hr_max_2_int1_d5_d15","hr_max_2_int1_d5_d16","hr_max_2_int1_d5_d17","hr_max_2_int1_d5_d18","hr_max_2_int1_d5_d19","hr_max_2_int1_d5_d20","hr_max_2_int1_d5_d21","hr_max_2_int1_d5_d22","hr_max_2_int1_d5_d23","hr_max_2_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min10_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_2_int1_d13","severity_change_2_int1_d14","severity_change_2_int1_d15","severity_change_2_int1_d16","severity_change_2_int1_d17","severity_change_2_int1_d18","severity_change_2_int1_d19","severity_change_2_int1_d20","severity_change_2_int1_d21","severity_change_2_int1_d22","severity_change_2_int1_d23","severity_change_2_int1_d24")], na.rm=TRUE)
+
+Techs$min10_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_2_int1_d13","numb_symps_2_int1_d14","numb_symps_2_int1_d15","numb_symps_2_int1_d16","numb_symps_2_int1_d17","numb_symps_2_int1_d18","numb_symps_2_int1_d19","numb_symps_2_int1_d20","numb_symps_2_int1_d21","numb_symps_2_int1_d22","numb_symps_2_int1_d23","numb_symps_2_int1_d24")], na.rm=TRUE)
+
+Techs$min15_mon2 <- rowMeans(Techs[, c("hr_3_int1_d5_d13","hr_3_int1_d5_d14","hr_3_int1_d5_d15","hr_3_int1_d5_d16","hr_3_int1_d5_d17","hr_3_int1_d5_d18","hr_3_int1_d5_d19","hr_3_int1_d5_d20","hr_3_int1_d5_d21","hr_3_int1_d5_d22","hr_3_int1_d5_d23","hr_3_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min15_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_3_int1_d5_d13","hr_max_3_int1_d5_d14","hr_max_3_int1_d5_d15","hr_max_3_int1_d5_d16","hr_max_3_int1_d5_d17","hr_max_3_int1_d5_d18","hr_max_3_int1_d5_d19","hr_max_3_int1_d5_d20","hr_max_3_int1_d5_d21","hr_max_3_int1_d5_d22","hr_max_3_int1_d5_d23","hr_max_3_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min15_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_3_int1_d13","severity_change_3_int1_d14","severity_change_3_int1_d15","severity_change_3_int1_d16","severity_change_3_int1_d17","severity_change_3_int1_d18","severity_change_3_int1_d19","severity_change_3_int1_d20","severity_change_3_int1_d21","severity_change_3_int1_d22","severity_change_3_int1_d23","severity_change_3_int1_d24")], na.rm=TRUE)
+
+Techs$min15_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_3_int1_d13","numb_symps_3_int1_d14","numb_symps_3_int1_d15","numb_symps_3_int1_d16","numb_symps_3_int1_d17","numb_symps_3_int1_d18","numb_symps_3_int1_d19","numb_symps_3_int1_d20","numb_symps_3_int1_d21","numb_symps_3_int1_d22","numb_symps_3_int1_d23","numb_symps_3_int1_d24")], na.rm=TRUE)
+
+Techs$min20_mon2 <- rowMeans(Techs[, c("hr_4_int1_d5_d13","hr_4_int1_d5_d14","hr_4_int1_d5_d15","hr_4_int1_d5_d16","hr_4_int1_d5_d17","hr_4_int1_d5_d18","hr_4_int1_d5_d19","hr_4_int1_d5_d20","hr_4_int1_d5_d21","hr_4_int1_d5_d22","hr_4_int1_d5_d23","hr_4_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min20_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_4_int1_d5_d13","hr_max_4_int1_d5_d14","hr_max_4_int1_d5_d15","hr_max_4_int1_d5_d16","hr_max_4_int1_d5_d17","hr_max_4_int1_d5_d18","hr_max_4_int1_d5_d19","hr_max_4_int1_d5_d20","hr_max_4_int1_d5_d21","hr_max_4_int1_d5_d22","hr_max_4_int1_d5_d23","hr_max_4_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min20_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_4_int1_d13","severity_change_4_int1_d14","severity_change_4_int1_d15","severity_change_4_int1_d16","severity_change_4_int1_d17","severity_change_4_int1_d18","severity_change_4_int1_d19","severity_change_4_int1_d20","severity_change_4_int1_d21","severity_change_4_int1_d22","severity_change_4_int1_d23","severity_change_4_int1_d24")], na.rm=TRUE)
+
+Techs$min20_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_4_int1_d13","numb_symps_4_int1_d14","numb_symps_4_int1_d15","numb_symps_4_int1_d16","numb_symps_4_int1_d17","numb_symps_4_int1_d18","numb_symps_4_int1_d19","numb_symps_4_int1_d20","numb_symps_4_int1_d21","numb_symps_4_int1_d22","numb_symps_4_int1_d23","numb_symps_4_int1_d24")], na.rm=TRUE)
+
+Techs$min25_mon2 <- rowMeans(Techs[, c("hr_5_int1_d5_d13","hr_5_int1_d5_d14","hr_5_int1_d5_d15","hr_5_int1_d5_d16","hr_5_int1_d5_d17","hr_5_int1_d5_d18","hr_5_int1_d5_d19","hr_5_int1_d5_d20","hr_5_int1_d5_d21","hr_5_int1_d5_d22","hr_5_int1_d5_d23","hr_5_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min25_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_5_int1_d5_d13","hr_max_5_int1_d5_d14","hr_max_5_int1_d5_d15","hr_max_5_int1_d5_d16","hr_max_5_int1_d5_d17","hr_max_5_int1_d5_d18","hr_max_5_int1_d5_d19","hr_max_5_int1_d5_d20","hr_max_5_int1_d5_d21","hr_max_5_int1_d5_d22","hr_max_5_int1_d5_d23","hr_max_5_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min25_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_5_int1_d13","severity_change_5_int1_d14","severity_change_5_int1_d15","severity_change_5_int1_d16","severity_change_5_int1_d17","severity_change_5_int1_d18","severity_change_5_int1_d19","severity_change_5_int1_d20","severity_change_5_int1_d21","severity_change_5_int1_d22","severity_change_5_int1_d23","severity_change_5_int1_d24")], na.rm=TRUE)
+
+Techs$min25_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_5_int1_d13","numb_symps_5_int1_d14","numb_symps_5_int1_d15","numb_symps_5_int1_d16","numb_symps_5_int1_d17","numb_symps_5_int1_d18","numb_symps_5_int1_d19","numb_symps_5_int1_d20","numb_symps_5_int1_d21","numb_symps_5_int1_d22","numb_symps_5_int1_d23","numb_symps_5_int1_d24")], na.rm=TRUE)
+
+Techs$min30_mon2 <- rowMeans(Techs[, c("hr_6_int1_d5_d13","hr_6_int1_d5_d14","hr_6_int1_d5_d15","hr_6_int1_d5_d16","hr_6_int1_d5_d17","hr_6_int1_d5_d18","hr_6_int1_d5_d19","hr_6_int1_d5_d20","hr_6_int1_d5_d21","hr_6_int1_d5_d22","hr_6_int1_d5_d23","hr_6_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min30_hr_perc_mon2 <- rowMeans(Techs[ , c("hr_max_6_int1_d5_d13","hr_max_6_int1_d5_d14","hr_max_6_int1_d5_d15","hr_max_6_int1_d5_d16","hr_max_6_int1_d5_d17","hr_max_6_int1_d5_d18","hr_max_6_int1_d5_d19","hr_max_6_int1_d5_d20","hr_max_6_int1_d5_d21","hr_max_6_int1_d5_d22","hr_max_6_int1_d5_d23","hr_max_6_int1_d5_d24")], na.rm=TRUE)
+
+Techs$min30_chng_symp_mon2 <- rowMeans(Techs[, c("severity_change_6_int1_d13","severity_change_6_int1_d14","severity_change_6_int1_d15","severity_change_6_int1_d16","severity_change_6_int1_d17","severity_change_6_int1_d18","severity_change_6_int1_d19","severity_change_6_int1_d20","severity_change_6_int1_d21","severity_change_6_int1_d22","severity_change_6_int1_d23","severity_change_6_int1_d24")], na.rm=TRUE)
+
+Techs$min30_numb_symps_mon2 <- rowMeans(Techs[, c("numb_symps_6_int1_d13","numb_symps_6_int1_d14","numb_symps_6_int1_d15","numb_symps_6_int1_d16","numb_symps_6_int1_d17","numb_symps_6_int1_d18","numb_symps_6_int1_d19","numb_symps_6_int1_d20","numb_symps_6_int1_d21","numb_symps_6_int1_d22","numb_symps_6_int1_d23","numb_symps_6_int1_d24")], na.rm=TRUE)
+```
+
+
+```{r}
+
+# MONTH 3
+
+Techs$baseline_mon3 <- rowMeans(Techs[, c("baseline_hr_int1_d5_d25","baseline_hr_int1_d5_d26","baseline_hr_int1_d5_d27","baseline_hr_int1_d5_d28","baseline_hr_int1_d5_d29","baseline_hr_int1_d5_d30","baseline_hr_int1_d5_d31","baseline_hr_int1_d5_d32","baseline_hr_int1_d5_d33","baseline_hr_int1_d5_d34","baseline_hr_int1_d5_d35","baseline_hr_int1_d5_d36")], na.rm=TRUE)
+
+Techs$baseline_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_baseline_int1_d5_d25","hr_max_baseline_int1_d5_d26","hr_max_baseline_int1_d5_d27","hr_max_baseline_int1_d5_d28","hr_max_baseline_int1_d5_d29","hr_max_baseline_int1_d5_d30","hr_max_baseline_int1_d5_d31","hr_max_baseline_int1_d5_d32","hr_max_baseline_int1_d5_d33","hr_max_baseline_int1_d5_d34","hr_max_baseline_int1_d5_d35","hr_max_baseline_int1_d5_d36")], na.rm=TRUE)
+
+Techs$baseline_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_int1_d25","severity_change_int1_d26","severity_change_int1_d27","severity_change_int1_d28","severity_change_int1_d29","severity_change_int1_d30","severity_change_int1_d31","severity_change_int1_d32","severity_change_int1_d33","severity_change_int1_d34","severity_change_int1_d35","severity_change_int1_d36")], na.rm=TRUE)
+
+Techs$baseline_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_int1_d25","numb_symps_int1_d26","numb_symps_int1_d27","numb_symps_int1_d28","numb_symps_int1_d29","numb_symps_int1_d30","numb_symps_int1_d31","numb_symps_int1_d32","numb_symps_int1_d33","numb_symps_int1_d34","numb_symps_int1_d35", "numb_symps_int1_d36")], na.rm=TRUE)
+
+Techs$min05_mon3 <- rowMeans(Techs[, c("hr_1_int1_d5_d25","hr_1_int1_d5_d26","hr_1_int1_d5_d27","hr_1_int1_d5_d28","hr_1_int1_d5_d29","hr_1_int1_d5_d30","hr_1_int1_d5_d31","hr_1_int1_d5_d32","hr_1_int1_d5_d33","hr_1_int1_d5_d34","hr_1_int1_d5_d35","hr_1_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min05_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_1_int1_d5_d25","hr_max_1_int1_d5_d26","hr_max_1_int1_d5_d27","hr_max_1_int1_d5_d28","hr_max_1_int1_d5_d29","hr_max_1_int1_d5_d30","hr_max_1_int1_d5_d31","hr_max_1_int1_d5_d32","hr_max_1_int1_d5_d33","hr_max_1_int1_d5_d34","hr_max_1_int1_d5_d35","hr_max_1_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min05_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_1_int1_d25","severity_change_1_int1_d26","severity_change_1_int1_d27","severity_change_1_int1_d28","severity_change_1_int1_d29","severity_change_1_int1_d30","severity_change_1_int1_d31","severity_change_1_int1_d32","severity_change_1_int1_d33","severity_change_1_int1_d34","severity_change_1_int1_d35","severity_change_1_int1_d36")], na.rm=TRUE)
+
+Techs$min05_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_1_int1_d25","numb_symps_1_int1_d26","numb_symps_1_int1_d27","numb_symps_1_int1_d28","numb_symps_1_int1_d29","numb_symps_1_int1_d30","numb_symps_1_int1_d31","numb_symps_1_int1_d32","numb_symps_1_int1_d33","numb_symps_1_int1_d34","numb_symps_1_int1_d35", "numb_symps_1_int1_d36")], na.rm=TRUE)
+
+Techs$min10_mon3 <- rowMeans(Techs[, c("hr_2_int1_d5_d25","hr_2_int1_d5_d26","hr_2_int1_d5_d27","hr_2_int1_d5_d28","hr_2_int1_d5_d29","hr_2_int1_d5_d30","hr_2_int1_d5_d31","hr_2_int1_d5_d32","hr_2_int1_d5_d33","hr_2_int1_d5_d34","hr_2_int1_d5_d35","hr_2_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min10_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_2_int1_d5_d25","hr_max_2_int1_d5_d26","hr_max_2_int1_d5_d27","hr_max_2_int1_d5_d28","hr_max_2_int1_d5_d29","hr_max_2_int1_d5_d30","hr_max_2_int1_d5_d31","hr_max_2_int1_d5_d32","hr_max_2_int1_d5_d33","hr_max_2_int1_d5_d34","hr_max_2_int1_d5_d35","hr_max_2_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min10_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_2_int1_d25","severity_change_2_int1_d26","severity_change_2_int1_d27","severity_change_2_int1_d28","severity_change_2_int1_d29","severity_change_2_int1_d30","severity_change_2_int1_d31","severity_change_2_int1_d32","severity_change_2_int1_d33","severity_change_2_int1_d34","severity_change_2_int1_d35","severity_change_2_int1_d36")], na.rm=TRUE)
+
+Techs$min10_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_2_int1_d25","numb_symps_2_int1_d26","numb_symps_2_int1_d27","numb_symps_2_int1_d28","numb_symps_2_int1_d29","numb_symps_2_int1_d30","numb_symps_2_int1_d31","numb_symps_2_int1_d32","numb_symps_2_int1_d33","numb_symps_2_int1_d34","numb_symps_2_int1_d35", "numb_symps_2_int1_d36")], na.rm=TRUE)
+
+Techs$min15_mon3 <- rowMeans(Techs[, c("hr_3_int1_d5_d25","hr_3_int1_d5_d26","hr_3_int1_d5_d27","hr_3_int1_d5_d28","hr_3_int1_d5_d29","hr_3_int1_d5_d30","hr_3_int1_d5_d31","hr_3_int1_d5_d32","hr_3_int1_d5_d33","hr_3_int1_d5_d34","hr_3_int1_d5_d35","hr_3_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min15_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_3_int1_d5_d25","hr_max_3_int1_d5_d26","hr_max_3_int1_d5_d27","hr_max_3_int1_d5_d28","hr_max_3_int1_d5_d29","hr_max_3_int1_d5_d30","hr_max_3_int1_d5_d31","hr_max_3_int1_d5_d32","hr_max_3_int1_d5_d33","hr_max_3_int1_d5_d34","hr_max_3_int1_d5_d35","hr_max_3_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min15_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_3_int1_d25","severity_change_3_int1_d26","severity_change_3_int1_d27","severity_change_3_int1_d28","severity_change_3_int1_d29","severity_change_3_int1_d30","severity_change_3_int1_d31","severity_change_3_int1_d32","severity_change_3_int1_d33","severity_change_3_int1_d34","severity_change_3_int1_d35","severity_change_3_int1_d36")], na.rm=TRUE)
+
+Techs$min15_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_3_int1_d25","numb_symps_3_int1_d26","numb_symps_3_int1_d27","numb_symps_3_int1_d28","numb_symps_3_int1_d29","numb_symps_3_int1_d30","numb_symps_3_int1_d31","numb_symps_3_int1_d32","numb_symps_3_int1_d33","numb_symps_3_int1_d34","numb_symps_3_int1_d35", "numb_symps_3_int1_d36")], na.rm=TRUE)
+
+Techs$min20_mon3 <- rowMeans(Techs[, c("hr_4_int1_d5_d25","hr_4_int1_d5_d26","hr_4_int1_d5_d27","hr_4_int1_d5_d28","hr_4_int1_d5_d29","hr_4_int1_d5_d30","hr_4_int1_d5_d31","hr_4_int1_d5_d32","hr_4_int1_d5_d33","hr_4_int1_d5_d34","hr_4_int1_d5_d35","hr_4_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min20_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_4_int1_d5_d25","hr_max_4_int1_d5_d26","hr_max_4_int1_d5_d27","hr_max_4_int1_d5_d28","hr_max_4_int1_d5_d29","hr_max_4_int1_d5_d30","hr_max_4_int1_d5_d31","hr_max_4_int1_d5_d32","hr_max_4_int1_d5_d33","hr_max_4_int1_d5_d34","hr_max_4_int1_d5_d35","hr_max_4_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min20_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_4_int1_d25","severity_change_4_int1_d26","severity_change_4_int1_d27","severity_change_4_int1_d28","severity_change_4_int1_d29","severity_change_4_int1_d30","severity_change_4_int1_d31","severity_change_4_int1_d32","severity_change_4_int1_d33","severity_change_4_int1_d34","severity_change_4_int1_d35","severity_change_4_int1_d36")], na.rm=TRUE)
+
+Techs$min20_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_4_int1_d25","numb_symps_4_int1_d26","numb_symps_4_int1_d27","numb_symps_4_int1_d28","numb_symps_4_int1_d29","numb_symps_4_int1_d30","numb_symps_4_int1_d31","numb_symps_4_int1_d32","numb_symps_4_int1_d33","numb_symps_4_int1_d34","numb_symps_4_int1_d35", "numb_symps_4_int1_d36")], na.rm=TRUE)
+
+Techs$min25_mon3 <- rowMeans(Techs[, c("hr_5_int1_d5_d25","hr_5_int1_d5_d26","hr_5_int1_d5_d27","hr_5_int1_d5_d28","hr_5_int1_d5_d29","hr_5_int1_d5_d30","hr_5_int1_d5_d31","hr_5_int1_d5_d32","hr_5_int1_d5_d33","hr_5_int1_d5_d34","hr_5_int1_d5_d35","hr_5_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min25_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_5_int1_d5_d25","hr_max_5_int1_d5_d26","hr_max_5_int1_d5_d27","hr_max_5_int1_d5_d28","hr_max_5_int1_d5_d29","hr_max_5_int1_d5_d30","hr_max_5_int1_d5_d31","hr_max_5_int1_d5_d32","hr_max_5_int1_d5_d33","hr_max_5_int1_d5_d34","hr_max_5_int1_d5_d35","hr_max_5_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min25_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_5_int1_d25","severity_change_5_int1_d26","severity_change_5_int1_d27","severity_change_5_int1_d28","severity_change_5_int1_d29","severity_change_5_int1_d30","severity_change_5_int1_d31","severity_change_5_int1_d32","severity_change_5_int1_d33","severity_change_5_int1_d34","severity_change_5_int1_d35","severity_change_5_int1_d36")], na.rm=TRUE)
+
+Techs$min25_numb_symps_mon3 <- rowMeans(Techs[, c("numb_symps_5_int1_d25","numb_symps_5_int1_d26","numb_symps_5_int1_d27","numb_symps_5_int1_d28","numb_symps_5_int1_d29","numb_symps_5_int1_d30","numb_symps_5_int1_d31","numb_symps_5_int1_d32","numb_symps_5_int1_d33","numb_symps_5_int1_d34","numb_symps_5_int1_d35", "numb_symps_5_int1_d36")], na.rm=TRUE)
+
+Techs$min30_mon3 <- rowMeans(Techs[, c("hr_6_int1_d5_d25","hr_6_int1_d5_d26","hr_6_int1_d5_d27","hr_6_int1_d5_d28","hr_6_int1_d5_d29","hr_6_int1_d5_d30","hr_6_int1_d5_d31","hr_6_int1_d5_d32","hr_6_int1_d5_d33","hr_6_int1_d5_d34","hr_6_int1_d5_d35","hr_6_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min30_hr_perc_mon3 <- rowMeans(Techs[ , c("hr_max_6_int1_d5_d25","hr_max_6_int1_d5_d26","hr_max_6_int1_d5_d27","hr_max_6_int1_d5_d28","hr_max_6_int1_d5_d29","hr_max_6_int1_d5_d30","hr_max_6_int1_d5_d31","hr_max_6_int1_d5_d32","hr_max_6_int1_d5_d33","hr_max_6_int1_d5_d34","hr_max_6_int1_d5_d35","hr_max_6_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min30_chng_symp_mon3 <- rowMeans(Techs[, c("severity_change_6_int1_d25","severity_change_6_int1_d26","severity_change_6_int1_d27","severity_change_6_int1_d28","severity_change_6_int1_d29","severity_change_6_int1_d30","severity_change_6_int1_d31","severity_change_6_int1_d32","severity_change_6_int1_d33","severity_change_6_int1_d34","severity_change_6_int1_d35","severity_change_6_int1_d36")], na.rm=TRUE)
+
+Techs$min30_numb_symps_mon3<- rowMeans(Techs[, c("numb_symps_6_int1_d25","numb_symps_6_int1_d26","numb_symps_6_int1_d27","numb_symps_6_int1_d28","numb_symps_6_int1_d29","numb_symps_6_int1_d30","numb_symps_6_int1_d31","numb_symps_6_int1_d32","numb_symps_6_int1_d33","numb_symps_6_int1_d34","numb_symps_6_int1_d35", "numb_symps_6_int1_d36")], na.rm=TRUE)
+```
+
+
+```{r} 
  
  # 'athletic' vs non-athletic based on WHO PA recommendations
 Techs_athl_set <- Techs
-Techs_athl_set$baseline_vig_and_mod <- if_else(Techs_athl_set$baseline_vig_and_mod > 75,0, 1)
+hist(Techs$relative_vo2max_agecorrected_baseline)
+Techs_athl_set$relative_vo2max_agecorrected_baseline <- if_else(relative_vo2max_agecorrected_baseline$baseline_vig_and_mod > 75,0, 1)
 
 # fit (above poor) vs. non fit (at or below poor VO2 scores)
 Techs_fit_set <- Techs
-hist(Techs$percentile)
-Techs_fit_set$percentile <- if_else(Techs_fit_set$percentile > 50,0, 1)
+hist(Techs$relative_vo2max_agecorrected_baseline)
+Techs_fit_set$relative_vo2max_agecorrected_baseline <- if_else(Techs_fit_set$relative_vo2max_agecorrected_baseline > 37.4065,0, 1)
 
 # under 25 vs over 25 years old
 Techs_age_set <- Techs
@@ -315,11 +494,68 @@ Techs_tbi_set$days_since_injury <- if_else(Techs_tbi_set$days_since_injury > 56,
 
 ```
 
-# Create different long formatted datasets for each data set
+# Create different long formatted datasets for each data set to look at 12-week intervention
 ```{r}
+
+Techs <- Techs %>% 
+dplyr::rename(participant = name)
+
+# CHANGE IN HEART RATE
 long_techs1 <- Techs %>%
 gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
 
+long_techs1 <- long_techs1 %>% select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80)
+
+long_techs1_mon1 <- Techs %>%
+gather(key = "time_point", value = "heart_rate_mon1", baseline_mon1, min05_mon1, min10_mon1, min15_mon1, min20_mon1, min25_mon1, min30_mon1)
+
+long_techs1_mon1 <- long_techs1_mon1 %>% select(heart_rate_mon1)
+
+long_techs1_mon2 <- Techs %>%
+gather(key = "time_point", value = "heart_rate_mon2", baseline_mon2, min05_mon2, min10_mon2, min15_mon2, min20_mon2, min25_mon2, min30_mon2)
+
+long_techs1_mon2 <- long_techs1_mon2 %>% select(heart_rate_mon2)
+
+long_techs1_mon3 <- Techs %>%
+gather(key = "time_point", value = "heart_rate_mon3", baseline_mon3, min05_mon3, min10_mon3, min15_mon3, min20_mon3, min25_mon3, min30_mon3)
+
+long_techs1_mon3 <- long_techs1_mon3 %>% select(heart_rate_mon3)
+
+long_techs1 <- bind_cols(long_techs1, long_techs1_mon1,long_techs1_mon2,long_techs1_mon3)
+
+
+# CHANGE IN SYMPTOMS
+long_techs2 <- Techs %>%
+  gather(key = "timepoint", value = "symptom_change",baseline_chng_symp, min05_chng_symp, min10_chng_symp, min15_chng_symp, min20_chng_symp, min25_chng_symp, min30_chng_symp)
+
+long_techs2 <- long_techs2 %>% select(symptom_change)
+
+long_techs2_mon1 <- Techs %>%
+  gather(key = "timepoint", value = "symptom_change_mon1",baseline_chng_symp_mon1, min05_chng_symp_mon1, min10_chng_symp_mon1, min15_chng_symp_mon1, min20_chng_symp_mon1, min25_chng_symp_mon1, min30_chng_symp_mon1)
+
+long_techs2_mon1 <- long_techs2_mon1 %>% select(symptom_change_mon1)
+
+long_techs2_mon2 <- Techs %>%
+  gather(key = "timepoint", value = "symptom_change_mon2",baseline_chng_symp_mon2, min05_chng_symp_mon2, min10_chng_symp_mon2, min15_chng_symp_mon2, min20_chng_symp_mon2, min25_chng_symp_mon2, min30_chng_symp_mon2)
+
+long_techs2_mon2 <- long_techs2_mon2 %>% select(symptom_change_mon2)
+
+long_techs2_mon3 <- Techs %>%
+  gather(key = "timepoint", value = "symptom_change_mon3",baseline_chng_symp_mon3, min05_chng_symp_mon3, min10_chng_symp_mon3, min15_chng_symp_mon3, min20_chng_symp_mon3, min25_chng_symp_mon3, min30_chng_symp_mon3)
+
+long_techs2_mon3 <- long_techs2_mon3 %>% select(symptom_change_mon3)
+
+# COMBINE INTO ONE DATAFRAME
+
+long_techs <- bind_cols(long_techs1, long_techs2,long_techs2_mon1,long_techs2_mon2,long_techs2_mon3)
+
+long_techs <- long_techs[long_techs$randomization_group == 0,]
+
+```
+
+
+
+``` {r}
 long_techs1.1 <- Techs_athl_set %>%
 gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
 
@@ -331,9 +567,10 @@ gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, 
 
 long_techs1.4 <- Techs_tbi_set %>%
 gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+```
 
-long_techs2 <- Techs %>%
-  gather(key = "timepoint", value = "symptom_change",baseline_chng_symp, min05_chng_symp, min10_chng_symp, min15_chng_symp, min20_chng_symp, min25_chng_symp, min30_chng_symp)
+```{r}
+
 
 
 long_techs3 <- Techs %>%
@@ -373,6 +610,21 @@ long_techs <- long_techs[long_techs$participant != "techs_18", ]
 
 phase <- c("baseline", "post_warmup", "phase1_2min", "phase1_4min", "phase1_6min", "phase2_2min", "phase2_4min", "phase2_6min", "phase2_8min", "phase2_10min", "phase2_12min")
 ```
+
+
+```{r}
+
+Techs_HRrecovery <-Techs |> mutate(HR25_30_recovery = min25 - min30,
+                                  HR25_30_recovery_perc = Techs$min25_hr_perc - Techs$min30_hr_perc)
+
+
+Techs$min25 <- rowMeans(Techs[, c("hr_5_int1_d5","hr_5_int1_d5_d2","hr_5_int1_d5_d3","hr_5_int1_d5_d4","hr_5_int1_d5_d5","hr_5_int1_d5_d6","hr_5_int1_d5_d7","hr_5_int1_d5_d8","hr_5_int1_d5_d9","hr_5_int1_d5_d10","hr_5_int1_d5_d11","hr_5_int1_d5_d12","hr_5_int1_d5_d13","hr_5_int1_d5_d14","hr_5_int1_d5_d15","hr_5_int1_d5_d16","hr_5_int1_d5_d17","hr_5_int1_d5_d18","hr_5_int1_d5_d19","hr_5_int1_d5_d20","hr_5_int1_d5_d21","hr_5_int1_d5_d22","hr_5_int1_d5_d23","hr_5_int1_d5_d24","hr_5_int1_d5_d25","hr_5_int1_d5_d26","hr_5_int1_d5_d27","hr_5_int1_d5_d28","hr_5_int1_d5_d29","hr_5_int1_d5_d30","hr_5_int1_d5_d31","hr_5_int1_d5_d32","hr_5_int1_d5_d33","hr_5_int1_d5_d34","hr_5_int1_d5_d35","hr_5_int1_d5_d36")], na.rm=TRUE)
+
+Techs$min30 <- rowMeans(Techs[, c("hr_6_int1_d5","hr_6_int1_d5_d2","hr_6_int1_d5_d3","hr_6_int1_d5_d4","hr_6_int1_d5_d5","hr_6_int1_d5_d6","hr_6_int1_d5_d7","hr_6_int1_d5_d8","hr_6_int1_d5_d9","hr_6_int1_d5_d10","hr_6_int1_d5_d11","hr_6_int1_d5_d12","hr_6_int1_d5_d13","hr_6_int1_d5_d14","hr_6_int1_d5_d15","hr_6_int1_d5_d16","hr_6_int1_d5_d17","hr_6_int1_d5_d18","hr_6_int1_d5_d19","hr_6_int1_d5_d20","hr_6_int1_d5_d21","hr_6_int1_d5_d22","hr_6_int1_d5_d23","hr_6_int1_d5_d24","hr_6_int1_d5_d25","hr_6_int1_d5_d26","hr_6_int1_d5_d27","hr_6_int1_d5_d28","hr_6_int1_d5_d29","hr_6_int1_d5_d30","hr_6_int1_d5_d31","hr_6_int1_d5_d32","hr_6_int1_d5_d33","hr_6_int1_d5_d34","hr_6_int1_d5_d35","hr_6_int1_d5_d36")], na.rm=TRUE)
+
+
+```
+
 
 
 ## Plots
@@ -426,16 +678,15 @@ F1_plot
 F1_techs_lme <- F1_techs %>%
   mutate(timepoint = recode(timepoint,
                    "baseline_hr" = 1,
-                   "baseline_hr_2_v1" = 2 ,
-                   "hr_2" = 3,
-                   "hr_4" = 4,
-                   "hr_6" = 5,
-                   "hr_7" = 6,
-                   "hr_8" = 7,
-                   "hr_9" = 8,
-                   "hr_10" = 9,
-                   "hr_11" = 10,
-                   "hr_12" = 11))
+                   "hr_2" = 2,
+                   "hr_4" = 3,
+                   "hr_6" = 4,
+                   "hr_7" = 5,
+                   "hr_8" = 6,
+                   "hr_9" = 7,
+                   "hr_10" = 8,
+                   "hr_11" = 9,
+                   "hr_12" = 10))
 
 # This model is preferred. Significant chi-square
 F1_techs_lme$timepoint <- as.numeric(F1_techs_lme$timepoint)
@@ -467,18 +718,46 @@ ggplot(F1_techs_lme, aes(x=heart_rate, y=rpe, group = participant)) +
   labs(subtitle = "Rate of perceived exertion x Heart rate during BESTT", x = "Heart Rate (bpm)", y = "RPE")
 
 
-
 #FIGURE 4
 
 ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
-  geom_line(color = "#f57600") +
-  geom_point(color = "#f57600") + 
-  geom_line(aes(group = participant, y = severity_score*10),na.rm = TRUE, color = "blue") + 
-  geom_point(aes(group = participant, y = severity_score*10),na.rm = TRUE, color = "blue") + 
+  # Main heart rate line (most pronounced)
+  geom_line(color = "#f57600", size = 1) +
+  geom_point(color = "#f57600", size = 1) + 
+  
+  # Main symptom change line (most pronounced)
+  geom_line(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
+            color = "blue", size = 1.2) + 
+  geom_point(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
+             color = "blue", size = 2) + 
+  
+  # Additional heart rate averages (more transparent)
+  geom_line(aes(y = heart_rate_mon1), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dashed") +
+  geom_point(aes(y = heart_rate_mon1), color = "#f57600", alpha = 0.4, size = 0.8) +
+  
+  geom_line(aes(y = heart_rate_mon2), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dotted") +
+  geom_point(aes(y = heart_rate_mon2), color = "#f57600", alpha = 0.4, size = 0.8) +
+  
+  geom_line(aes(y = heart_rate_mon3), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dotdash") +
+  geom_point(aes(y = heart_rate_mon3), color = "#f57600", alpha = 0.4, size = 0.8) +
+  
+  # Additional symptom change averages (more transparent, scaled by 15)
+  geom_line(aes(y = symptom_change_mon1*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dashed") +
+  geom_point(aes(y = symptom_change_mon1*15), color = "blue", alpha = 0.4, size = 0.8) +
+  
+  geom_line(aes(y = symptom_change_mon2*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dotted") +
+  geom_point(aes(y = symptom_change_mon2*15), color = "blue", alpha = 0.4, size = 0.8) +
+  
+  geom_line(aes(y = symptom_change_mon3*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dotdash") +
+  geom_point(aes(y = symptom_change_mon3*15), color = "blue", alpha = 0.4, size = 0.8) +
+  
+  # Background rectangle
+  geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),
+            fill = "grey80", alpha = 0.10) + 
   scale_y_continuous(name = "Heart rate", limits = c(-50, 225),
-    sec.axis = sec_axis(~./10, name = "Change in severity scores", breaks = seq(0,20,by = 4))) +
+    sec.axis = sec_axis(~./20, name = "Change in severity scores", breaks = seq(-6,9,by = 3))) +
   facet_wrap(~ participant, nrow = 3) +  # Assuming 12 participants, arrange them in 3 rows
-  geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.20) + 
+  geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.10) + 
   theme(panel.grid.major = element_line(color = "grey"),
     panel.grid.major.y = element_blank(),
     axis.text.x = element_text(angle = 45, hjust = 1),
@@ -486,7 +765,7 @@ ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
     axis.title.y.right = element_text(margin = margin(l = 10)),
     text = element_text(size= 12),
     panel.background = element_rect(fill = "white", color = "black")) +
-  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Each Participant")
+  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Aerobic Participants")
 
 ```
 

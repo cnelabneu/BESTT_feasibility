@@ -1,0 +1,83 @@
+---
+title: "Loop for Techs data"
+author: "Mark Nwakamma"
+date: "2025-02-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+setwd('/Users/nwakamma.m/Documents/EEG data/TECHS/TECHS_DATA_2025-09-08_1700.xlsx')
+techs <- read_excel("/Users/nwakamma.m/Documents/EEG data/TECHS//TECHS_DATA_2025-09-08_1700.xlsx")
+
+```
+
+
+## Add 'change in symptom severity and number of symptoms' to data frame for each 5min increment during intervention
+```{r}
+
+selected_cols <- names(techs)[str_detect(names(techs), paste0("(", paste( collapse = "|"), "_int1_d5_d36$", ")"))]
+
+techs <- techs %>% mutate(
+  severity_change_int1_d36 = rowSums(.[, "baseline_cif_int1_d5_d36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_int1_d36 =rowSums(.[, selected_cols[5:24]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_1_int1_d36 = rowSums(.[, "min5_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_1_int1_d36 =rowSums(.[, selected_cols[29:48]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_2_int1_d36 = rowSums(.[, "min10_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_2_int1_d36 =rowSums(.[, selected_cols[52:72]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_3_int1_d36 = rowSums(.[, "min15_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_3_int1_d36 =rowSums(.[, selected_cols[76:96]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_4_int1_d36 = rowSums(.[, "min20_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_4_int1_d36 = rowSums(.[, selected_cols[100:120]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_5_int1_d36 = rowSums(.[, "min25_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_5_int1_d36 =rowSums(.[, selected_cols[124:144]] > 0, na.rm = TRUE))
+
+techs <- techs %>% mutate(
+  severity_change_6_int1_d36 = rowSums(.[, "min30_cif_int36"], na.rm = TRUE) - rowSums(.[, "baseline_cif_int1_d5_d36", drop = FALSE], na.rm = TRUE),
+  numb_symps_6_int1_d36 =rowSums(.[, selected_cols[148:167]] > 0, na.rm = TRUE))
+
+```
+
+
+## Add same thing to BESTT baseline
+```{r}
+selected_cols <- techs |> 
+  dplyr::select("headache", "neckpain", "dizziness_vomiting", "pressure", 
+                "blurred_vision", "balance_problems", "light_sensitive", 
+                "noise_sensitive", "slow", "fog", "feeling_right", 
+                "concentration", "remembering", "fatigue", "confusion", 
+                "drowsiness", "emotional", "irritability", "sleep", 
+                "sadness", "anxiety", "nausea") |>
+  dplyr::mutate(across(everything(), ~as.numeric(replace(., is.na(.), 0))))
+
+techs <- techs %>% mutate(
+  bestt_severity_change_baseline = rowSums(.[, "baseline_cif"], na.rm = TRUE) - rowSums(.[, "baseline_cif"], na.rm = TRUE),
+  bestt_numb_symps_baseline =rowSums(.[, names(selected_cols[1:22])] > 0, na.rm = TRUE))
+
+```
+
+## Add same thing to BESTT everything else
+```{r}
+
+selected_cols <- names(techs)[str_detect(names(techs), paste0("(", paste( collapse = "|"), "_12$", ")"))]
+
+view(selected_cols)
+
+techs <- techs %>% mutate(
+  bestt_severity_change_12 = rowSums(.[, "baseline_cif_12"], na.rm = TRUE) - rowSums(.[, "baseline_cif"], na.rm = TRUE),
+  bestt_numb_symps_12 =rowSums(.[, selected_cols[5:26]] > 0, na.rm = TRUE))
+
+writexl::write_xlsx(techs, "techs_BESTT_all2.xlsx")
+```
+
