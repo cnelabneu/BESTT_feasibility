@@ -1,7 +1,7 @@
 ---
 title: "BESTT_feasibility"
 author: "Mark Nwakamma"
-date: "7/1/2024"
+date: "09/25/2024"
 output: html_document
 ---
 
@@ -21,27 +21,27 @@ library(tableone)
 library(sjPlot)
 library(fmsb)
 
-Techs <- read_excel("/Users/nwakamma.m/Documents/TECHS/techs_BESTT_final_data.xlsx")
-bestt_test <- read_excel("/Users/nwakamma.m/Documents/TECHS/techs_BESTT_all.xlsx")
+Techs <- read_excel("/Users/nwakamma.m/Documents/R-code/BESTT_feasibility/techs_BESTT_final_data.xlsx")
+#bestt_test <- read_excel("/Users/nwakamma.m/Documents/R-code/BESTT_feasibility/techs_BESTT_all.xlsx")
 ```
 
 ## Figure 1 and 2 data wrangling
 ```{r cars}
 # heart rate from cycle test
-techs_fitness_hr <- bestt_test %>%
-  dplyr::select(name, baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
+techs_fitness_hr <- Techs %>%
+  dplyr::select(name, baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11)
 
 # change in symptoms from cycle test
-techs_fitness_symp <- bestt_test %>%
-  dplyr::select(bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11,bestt_severity_change_12)
+techs_fitness_symp <- Techs %>%
+  dplyr::select(bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11)
 
-techs_fitness_numbsymp <- bestt_test %>%
-  dplyr::select(bestt_numb_symps_baseline,bestt_numb_symps_2,bestt_numb_symps_4,bestt_numb_symps_6,bestt_numb_symps_7,bestt_numb_symps_8,bestt_numb_symps_9,bestt_numb_symps_10,bestt_numb_symps_11,bestt_numb_symps_12)
+techs_fitness_numbsymp <- Techs %>%
+  dplyr::select(bestt_numb_symps_baseline,bestt_numb_symps_2,bestt_numb_symps_4,bestt_numb_symps_6,bestt_numb_symps_7,bestt_numb_symps_8,bestt_numb_symps_9,bestt_numb_symps_10,bestt_numb_symps_11)
 
 
 # RPE from cycle test
-techs_fitness_rpe <- bestt_test %>%
-  dplyr::select(borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+techs_fitness_rpe <- Techs %>%
+  dplyr::select(borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11)
 
 # Combine heart rate and change in symptoms df
 F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
@@ -50,9 +50,9 @@ F1_techs <- bind_cols(techs_fitness_hr,techs_fitness_symp,techs_fitness_rpe)
 ```{r}
 # Make combined heart rate data long for plotting
 F1_techs_hr_long <- F1_techs %>%
-  gather(key = "time_point", value = "heart_rate", baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11,hr_12)
+  gather(key = "time_point", value = "heart_rate", baseline_hr,hr_2,hr_4,hr_6,hr_7,hr_8,hr_9,hr_10,hr_11)
 
-time_levels <- c("baseline_hr","hr_2","hr_4","hr_6","hr_7","hr_8","hr_9","hr_10","hr_11","hr_12")
+time_levels <- c("baseline_hr","hr_2","hr_4","hr_6","hr_7","hr_8","hr_9","hr_10","hr_11")
 
 # Convert `time_point` to a factor with specified levels
 F1_techs_hr_long <- F1_techs_hr_long %>%
@@ -61,9 +61,9 @@ F1_techs_hr_long <- F1_techs_hr_long %>%
 
 ```{r}
 # Make combined symptoms change data long for plotting
-F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11,bestt_severity_change_12)
+F1_techs_symp_long <- F1_techs %>% gather(key = "time_point_sym", value = "symp_change", bestt_severity_change_baseline,bestt_severity_change_2,bestt_severity_change_4,bestt_severity_change_6,bestt_severity_change_7,bestt_severity_change_8,bestt_severity_change_9,bestt_severity_change_10,bestt_severity_change_11)
 
-symp_levels <- c("symp_baseline","sympincrease_2","sympincrease_4","sympincrease_6","sympincrease_2_2","sympincrease_2_4","sympincrease_2_6","sympincrease_2_8","sympincrease_2_10","sympincrease_2_12")
+symp_levels <- c("symp_baseline","sympincrease_2","sympincrease_4","sympincrease_6","sympincrease_2_2","sympincrease_2_4","sympincrease_2_6","sympincrease_2_8","sympincrease_2_10")
 
 # Convert `time_point_symp` to a factor with specified levels
 F1_techs_symp_long <- F1_techs_symp_long %>%
@@ -71,9 +71,9 @@ F1_techs_symp_long <- F1_techs_symp_long %>%
 ```
 
 ```{r}
-F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11, borg_12)
+F1_techs_rpe_long <- F1_techs %>% gather(key = "time_point_rpe", value = "rpe", borg_baseline,borg_2,borg_4,borg_6,borg_7,borg_8,borg_9,borg_10, borg_11)
 
-rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10", "borg_11", "borg_12")
+rpe_levels <- c("borg_baseline","borg_2","borg_4","borg_6","borg_7","borg_8","borg_9","borg_10", "borg_11")
 
 # Convert `time_point_rpe` to a factor with specified levels
 F1_techs_rpe_long <- F1_techs_rpe_long %>%
@@ -86,10 +86,10 @@ F1_techs <- bind_cols(F1_techs_hr_long,F1_techs_symp_long,F1_techs_rpe_long)
 
 # Create a subset of only variables you will plot
 F1_techs <- F1_techs %>% 
-  dplyr::select(name...1, time_point...22, heart_rate, symp_change, rpe)
+  dplyr::select(name...1, time_point...20, heart_rate, symp_change, rpe)
 
 F1_techs <- F1_techs %>% 
-  dplyr::rename(participant = name...1, timepoint = time_point...22)
+  dplyr::rename(participant = name...1, timepoint = time_point...20)
 ```
 
 ```{r}
@@ -172,9 +172,11 @@ avg_fit_test <- avg_fit_test %>%
 
 # baseline symptom distribution
 
+
+
 Techs$randomization_group <- as.factor(Techs$randomization_group)
 
-ggplot2::ggplot(Techs_symp, mapping = aes(x = baseline_symp)) + geom_histogram(mapping = aes(fill= symptoms), binwidth = 1) + xlim(0,15) + theme_bw()+ theme( panel.grid = element_blank()) + theme(text = element_text(size = 16, family = "Times New Roman"))+
+ggplot2::ggplot(techs_fitness_numbsymp, mapping = aes(x = baseline_symp)) + geom_histogram(mapping = aes(fill= symptoms), binwidth = 1) + xlim(0,15) + theme_bw()+ theme( panel.grid = element_blank()) + theme(text = element_text(size = 16, family = "Times New Roman"))+
   labs(title = "", 
               subtitle = "Distribution of baseline symptoms",
               x = "# of Symptoms", y = "Count") + theme(plot.subtitle = element_text(hjust = 0.5))
@@ -184,21 +186,27 @@ ggplot2::ggplot(Techs_symp, mapping = aes(x = baseline_symp)) + geom_histogram(m
 # Symptoms radar plot
 ```{r}
 
+Techs |> 
+  mutate(
+    count_headache = sum(headache > 0, na.rm = TRUE),
+    mean_nonzero_headache = mean(headache[headache > 0], na.rm = TRUE)
+  )
+
 top_symptoms <- data.frame(
-    Headache = 0.451,
-    Brain_fog = 0.451,
-    Difficulty_remembering = 0.407,
-    Fatigue = 0.518,
-    Light_sensitivity = 0.555
+    "Headache" = 0.54,
+    "Brain fog" = 0.33,
+    "Difficulty remembering" = 0.33,
+    "Fatigue" = 0.41,
+    "Light sensitivity" = 0.33
 )
 
 # Define the max and min values
 max_min <- data.frame(
-    Headache = c(1, 0),
-    Brain_fog = c(1, 0),
-    Difficulty_remembering = c(1, 0),
-    Fatigue = c(1, 0),
-    Light_sensitivity = c(1, 0)
+    "Headache" = c(1, 0),
+    "Brain fog" = c(1, 0),
+    "Difficulty remembering" = c(1, 0),
+    "Fatigue" = c(1, 0),
+    "Light sensitivity" = c(1, 0)
 )
 
 # Combine top symptoms with max and min values
@@ -471,11 +479,14 @@ Techs$min30_numb_symps_mon3<- rowMeans(Techs[, c("numb_symps_6_int1_d25","numb_s
 
 
 ```{r} 
- 
- # 'athletic' vs non-athletic based on WHO PA recommendations
+ #Techs <- Techs %>% 
+#dplyr::rename(participant = name)
+
+ # 'active' vs 'non-active' based on ACSM PA recommendations
 Techs_athl_set <- Techs
-hist(Techs$relative_vo2max_agecorrected_baseline)
-Techs_athl_set$relative_vo2max_agecorrected_baseline <- if_else(relative_vo2max_agecorrected_baseline$baseline_vig_and_mod > 75,0, 1)
+Techs_athl_set <- Techs_athl_set |> mutate(baseline_vig_and_mod = baseline_vig_min_per_day_pa + baseline_mod_min_pa)
+hist(Techs_athl_set$baseline_vig_and_mod)
+Techs_athl_set$baseline_vig_and_mod <- if_else(Techs_athl_set$baseline_vig_and_mod > 75,0, 1)
 
 # fit (above poor) vs. non fit (at or below poor VO2 scores)
 Techs_fit_set <- Techs
@@ -485,41 +496,45 @@ Techs_fit_set$relative_vo2max_agecorrected_baseline <- if_else(Techs_fit_set$rel
 # under 25 vs over 25 years old
 Techs_age_set <- Techs
 hist(Techs$age)
-Techs_age_set$age <- if_else(Techs_age_set$age > 25,0,1)
+Techs_age_set$age <- if_else(Techs_age_set$age > 27,0,1)
 
 # within 8 weeks vs over 8 weeks since injury
 Techs_tbi_set <- Techs
-hist(Techs$days_since_injury)
-Techs_tbi_set$days_since_injury <- if_else(Techs_tbi_set$days_since_injury > 56,0, 1)
+hist(Techs$days_since_injury_calc)
+Techs_tbi_set$days_since_injury_calc <- if_else(Techs_tbi_set$days_since_injury_calc > 44.5,0, 1)
 
 ```
 
 # Create different long formatted datasets for each data set to look at 12-week intervention
 ```{r}
 
-Techs <- Techs %>% 
-dplyr::rename(participant = name)
-
 # CHANGE IN HEART RATE
 long_techs1 <- Techs %>%
-gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30) 
 
-long_techs1 <- long_techs1 %>% select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80)
+long_techs1_perc <- Techs %>%
+gather(key = "time_point", value = "heart_rate_perc", baseline_hr_perc, min05_hr_perc, min10_hr_perc, min15_hr_perc, min20_hr_perc, min25_hr_perc, min30_hr_perc)
+
+long_techs1 <- long_techs1 %>% dplyr::select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80)
+
+long_techs1_perc <- long_techs1_perc %>% dplyr::select(heart_rate_perc)
+
+long_techs1 <- bind_cols(long_techs1,long_techs1_perc)
 
 long_techs1_mon1 <- Techs %>%
 gather(key = "time_point", value = "heart_rate_mon1", baseline_mon1, min05_mon1, min10_mon1, min15_mon1, min20_mon1, min25_mon1, min30_mon1)
 
-long_techs1_mon1 <- long_techs1_mon1 %>% select(heart_rate_mon1)
+long_techs1_mon1 <- long_techs1_mon1 %>% dplyr::select(heart_rate_mon1)
 
 long_techs1_mon2 <- Techs %>%
 gather(key = "time_point", value = "heart_rate_mon2", baseline_mon2, min05_mon2, min10_mon2, min15_mon2, min20_mon2, min25_mon2, min30_mon2)
 
-long_techs1_mon2 <- long_techs1_mon2 %>% select(heart_rate_mon2)
+long_techs1_mon2 <- long_techs1_mon2 %>% dplyr::select(heart_rate_mon2)
 
 long_techs1_mon3 <- Techs %>%
 gather(key = "time_point", value = "heart_rate_mon3", baseline_mon3, min05_mon3, min10_mon3, min15_mon3, min20_mon3, min25_mon3, min30_mon3)
 
-long_techs1_mon3 <- long_techs1_mon3 %>% select(heart_rate_mon3)
+long_techs1_mon3 <- long_techs1_mon3 %>% dplyr::select(heart_rate_mon3)
 
 long_techs1 <- bind_cols(long_techs1, long_techs1_mon1,long_techs1_mon2,long_techs1_mon3)
 
@@ -528,28 +543,36 @@ long_techs1 <- bind_cols(long_techs1, long_techs1_mon1,long_techs1_mon2,long_tec
 long_techs2 <- Techs %>%
   gather(key = "timepoint", value = "symptom_change",baseline_chng_symp, min05_chng_symp, min10_chng_symp, min15_chng_symp, min20_chng_symp, min25_chng_symp, min30_chng_symp)
 
-long_techs2 <- long_techs2 %>% select(symptom_change)
+long_techs2 <- long_techs2 %>% dplyr::select(symptom_change)
 
 long_techs2_mon1 <- Techs %>%
   gather(key = "timepoint", value = "symptom_change_mon1",baseline_chng_symp_mon1, min05_chng_symp_mon1, min10_chng_symp_mon1, min15_chng_symp_mon1, min20_chng_symp_mon1, min25_chng_symp_mon1, min30_chng_symp_mon1)
 
-long_techs2_mon1 <- long_techs2_mon1 %>% select(symptom_change_mon1)
+long_techs2_mon1 <- long_techs2_mon1 %>% dplyr::select(symptom_change_mon1)
 
 long_techs2_mon2 <- Techs %>%
   gather(key = "timepoint", value = "symptom_change_mon2",baseline_chng_symp_mon2, min05_chng_symp_mon2, min10_chng_symp_mon2, min15_chng_symp_mon2, min20_chng_symp_mon2, min25_chng_symp_mon2, min30_chng_symp_mon2)
 
-long_techs2_mon2 <- long_techs2_mon2 %>% select(symptom_change_mon2)
+long_techs2_mon2 <- long_techs2_mon2 %>% dplyr::select(symptom_change_mon2)
 
 long_techs2_mon3 <- Techs %>%
   gather(key = "timepoint", value = "symptom_change_mon3",baseline_chng_symp_mon3, min05_chng_symp_mon3, min10_chng_symp_mon3, min15_chng_symp_mon3, min20_chng_symp_mon3, min25_chng_symp_mon3, min30_chng_symp_mon3)
 
-long_techs2_mon3 <- long_techs2_mon3 %>% select(symptom_change_mon3)
+long_techs2_mon3 <- long_techs2_mon3 %>% dplyr::select(symptom_change_mon3)
+
+long_techs2 <- bind_cols(long_techs2, long_techs2_mon1,long_techs2_mon2,long_techs2_mon3)
 
 # COMBINE INTO ONE DATAFRAME
 
-long_techs <- bind_cols(long_techs1, long_techs2,long_techs2_mon1,long_techs2_mon2,long_techs2_mon3)
+long_techs <- bind_cols(long_techs1, long_techs2)
+
+long_techs <- long_techs[-c(25,26,51,52,77,78,103,104,129,130,155,156,181,182),]
 
 long_techs <- long_techs[long_techs$randomization_group == 0,]
+
+phase <- c("baseline", "phase1_2min", "phase1_4min", "phase1_6min", "phase2_2min", "phase2_4min", "phase2_6min", "phase2_8min", "phase2_10min")
+
+time_main <- c("baseline", "min05", "min10", "min15", "min20", "min25", "min30")
 
 ```
 
@@ -567,51 +590,27 @@ gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, 
 
 long_techs1.4 <- Techs_tbi_set %>%
 gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
-```
 
-```{r}
-
-
-
-long_techs3 <- Techs %>%
-  gather(key = "timepoint", value = "severity_score",baseline_severity, min05_severity, min10_severity, min15_severity, min20_severity, min25_severity, min30_severity)
-
-
-long_techs1 <- long_techs1 %>%
-select(participant, randomization_group, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
-
-long_techs1.1 <- long_techs1.1 %>%
-select(participant, randomization_group, baseline_vig_and_mod, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
+long_techs1.1 <- long_techs1.1 %>% dplyr::select(participant, randomization_group, baseline_vig_and_mod, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
 
 long_techs1.2 <- long_techs1.2 %>%
-select(participant, randomization_group,percentile, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
+dplyr::select(participant, randomization_group,relative_vo2max_agecorrected_baseline, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions
 
 long_techs1.3 <- long_techs1.3 %>%
-select(participant, randomization_group,age, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions and age
+dplyr::select(participant, randomization_group,age, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions and age
 
 long_techs1.4 <- long_techs1.4 %>%
-select(participant, randomization_group, days_since_injury, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions and days since injury
+dplyr::select(participant, randomization_group, days_since_injury_calc, time_point, heart_rate, maxhr_65, maxhr_80) # need to add change in symptoms from interventions and days since injury
 
-long_techs2 <- long_techs2 %>%
-select(timepoint, symptom_change)
+long_techs_sub <- bind_cols(long_techs1.4, long_techs2)
 
-long_techs3 <- long_techs3 %>%
-select(timepoint, severity_score)
+long_techs_sub <- long_techs[long_techs$randomization_group == 0,]
 
-long_techs <- bind_cols(long_techs1, long_techs3) #combine heart and symptoms df
-
-long_techs <- long_techs %>% select(-timepoint) #remove timepoint variable
-
-long_techs <- long_techs[long_techs$randomization_group == 0,] #only include aerobic group
-
-long_techs <- long_techs[long_techs$days_since_injury == 0,] #used to seperate groups based on data sets.
-
-long_techs <- long_techs[long_techs$participant != "techs_18", ]
-
-phase <- c("baseline", "post_warmup", "phase1_2min", "phase1_4min", "phase1_6min", "phase2_2min", "phase2_4min", "phase2_6min", "phase2_8min", "phase2_10min", "phase2_12min")
+long_techs_sub <- long_techs[long_techs$days_since_injury_calc == 1,]
 ```
 
 
+## Observing HR recovery following the exercise portion of intervention
 ```{r}
 
 Techs_HRrecovery <-Techs |> mutate(HR25_30_recovery = min25 - min30,
@@ -647,11 +646,11 @@ ggplot2::ggplot(Techs, mapping = aes(x = baseline_cif)) + geom_histogram(mapping
               x = "# of Symptoms", y = "# of participants") + theme(plot.subtitle = element_text(hjust = 0.5))
 
 # Figure 2
-F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
-  geom_line(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
-  geom_point(aes(group = participant, y = heart_rate, color = "#f57600"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
-  geom_line(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
-  geom_point(aes(group = participant, y = symp_change*10, color = "blue"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+F1_plot <- ggplot(long_techs, aes(x = timepoint)) +
+  geom_line(aes(group = participant, y = heart_rate, color = "#339E76"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_point(aes(group = participant, y = heart_rate, color = "#339E76"), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_line(aes(group = participant, y = symp_change*10, color = "#C36521"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = symp_change*10, color = "#C36521"), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
   scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
     sec.axis = sec_axis(~./10, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
   scale_x_discrete(name = "Time Point", labels = phase) +
@@ -664,19 +663,48 @@ F1_plot <- ggplot(F1_techs, aes(x = timepoint)) +
     legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
     legend.text = element_text(size = 8),  # Smaller legend text
     legend.title = element_text(size = 10),  # Smaller legend title
-    text = element_text(size= 12),
+    text = element_text(size= 12,family = "Times New Roman"),
     plot.margin = margin(t = 15, r = 15, b = 15, l = 10),
     axis.title.y.right = element_text(margin = margin(l = 10))) + 
-  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Heart rate & ∆ in symptoms during BESTT") + 
-  geom_segment(aes(x = 5, xend = 5 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
-  geom_segment(aes(x = 0, xend = 11 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed") 
+  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Heart rate & ∆ in symptoms during MEBT") + 
+  geom_segment(aes(x = 4, xend = 4 , y = -50, yend = 200), size = 0.5, color = "black", linetype = "dashed") + 
+  geom_segment(aes(x = 0, xend = 10 , y = 30, yend = 30), size = 0.5, color = "black", linetype = "dashed") 
 
-F1_plot
+# Techs main aims paper
+long_techs <- long_techs |>
+  dplyr::mutate(
+    timepoint = factor(time_point, levels = time_main),
+    randomization_group = factor(randomization_group, levels = c(0, 1), labels = c("Aerobic Exercise", "Balance"))
+  )
+
+ggplot(long_techs, aes(x = timepoint)) +
+  geom_line(aes(group = participant, y = heart_rate, color = randomization_group), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_point(aes(group = participant, y = heart_rate, color = randomization_group), alpha = 0.25, size = 0.5, na.rm = TRUE) +
+  geom_line(aes(group = participant, y = symptom_change*17, color = randomization_group), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  geom_point(aes(group = participant, y = symptom_change*17, color = randomization_group), alpha = 0.25, size = 0.5, na.rm = TRUE) + 
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 200),
+    sec.axis = sec_axis(~./17, name = "Change in Symptoms", breaks = seq(-6,12,by = 3))) +
+  scale_x_discrete(name = "Time Point", labels = time_main) +
+  stat_summary(aes(y = heart_rate, group = randomization_group, color = randomization_group), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") +
+  stat_summary(aes(y = symptom_change*10, group = randomization_group, color = randomization_group), fun = mean, geom = "line", size = 1.5, na.rm = TRUE, linetype = "solid") + scale_color_manual(name = "Intervention group", values = c("Aerobic Exercise" = "#347CC9", "Balance" = "#C36521")) +
+  theme_minimal() + 
+  theme(
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1), 
+    legend.position = "right", 
+    legend.key.size = unit(0.5, "cm"),  # Smaller legend keys
+    legend.text = element_text(size = 8),  # Smaller legend text
+    legend.title = element_text(size = 10),  # Smaller legend title
+    text = element_text(size= 12,family = "Times New Roman"),
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 10),
+    axis.title.y.right = element_text(margin = margin(l = 10))) + 
+  labs(x = "Time Point", y = "Change in symptoms", subtitle = "Mean heart rate & ∆ in symptoms following 12-week intervention") + 
+  geom_segment(aes(x = 0.5, xend = 8 , y = 50, yend = 50), size = 0.5, color = "black", linetype = "dashed")
 
 
 # FIGURE 3 = rpe and heart rate over time
 F1_techs_lme <- F1_techs %>%
-  mutate(timepoint = recode(timepoint,
+  dplyr::mutate(timepoint = dplyr::recode(timepoint,
                    "baseline_hr" = 1,
                    "hr_2" = 2,
                    "hr_4" = 3,
@@ -685,8 +713,7 @@ F1_techs_lme <- F1_techs %>%
                    "hr_8" = 6,
                    "hr_9" = 7,
                    "hr_10" = 8,
-                   "hr_11" = 9,
-                   "hr_12" = 10))
+                   "hr_11" = 9))
 
 # This model is preferred. Significant chi-square
 F1_techs_lme$timepoint <- as.numeric(F1_techs_lme$timepoint)
@@ -714,58 +741,131 @@ ggplot(F1_techs_lme, aes(x=heart_rate, y=rpe, group = participant)) +
           panel.grid.minor = element_blank(),
         panel.border = element_rect(colour = "black", fill = NA),
           legend.position = "none",
-        text = element_text(size= 12)) +
-  labs(subtitle = "Rate of perceived exertion x Heart rate during BESTT", x = "Heart Rate (bpm)", y = "RPE")
+        text = element_text(size= 12, family = "Times New Roman")) +
+  labs(subtitle = "Rate of perceived exertion x Heart rate during MEBT", x = "Heart Rate (bpm)", y = "RPE")
 
 
-#FIGURE 4
+# Observing the differences in activity, fitness, age, and days since injury
 
-ggplot(long_techs, aes(x = time_point, y = heart_rate, group = participant)) +
+long_techs <- long_techs |>
+  mutate(participant = case_when(
+    participant == "techs_03" ~ "03",
+    participant == "techs_10" ~ "10",
+    participant == "techs_11" ~ "11",
+    participant == "techs_12" ~ "12",
+    participant == "techs_15" ~ "15",
+    participant == "techs_19" ~ "19",
+    participant == "techs_25" ~ "25",
+    participant == "techs_26" ~ "26",
+    participant == "techs_27" ~ "27",
+    participant == "techs_34" ~ "34",
+    participant == "techs_35" ~ "35",
+    participant == "techs_37" ~ "37",
+    TRUE ~ participant
+  )) |>
+  mutate(participant = factor(participant, levels = c("03", "10", "11", "12", "15", "19", "25", "26", "27", "34", "35", "37")))
+
+
+ggplot(long_techs, aes(x = time_point, y = heart_rate_perc, group = participant)) +
   # Main heart rate line (most pronounced)
   geom_line(color = "#f57600", size = 1) +
-  geom_point(color = "#f57600", size = 1) + 
+  geom_point(color = "#f57600", size = 1.5) + 
   
   # Main symptom change line (most pronounced)
-  geom_line(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
-            color = "blue", size = 1.2) + 
-  geom_point(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
-             color = "blue", size = 2) + 
-  
-  # Additional heart rate averages (more transparent)
-  geom_line(aes(y = heart_rate_mon1), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dashed") +
-  geom_point(aes(y = heart_rate_mon1), color = "#f57600", alpha = 0.4, size = 0.8) +
-  
-  geom_line(aes(y = heart_rate_mon2), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dotted") +
-  geom_point(aes(y = heart_rate_mon2), color = "#f57600", alpha = 0.4, size = 0.8) +
-  
-  geom_line(aes(y = heart_rate_mon3), color = "#f57600", alpha = 0.4, size = 0.8, linetype = "dotdash") +
-  geom_point(aes(y = heart_rate_mon3), color = "#f57600", alpha = 0.4, size = 0.8) +
-  
-  # Additional symptom change averages (more transparent, scaled by 15)
-  geom_line(aes(y = symptom_change_mon1*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dashed") +
-  geom_point(aes(y = symptom_change_mon1*15), color = "blue", alpha = 0.4, size = 0.8) +
-  
-  geom_line(aes(y = symptom_change_mon2*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dotted") +
-  geom_point(aes(y = symptom_change_mon2*15), color = "blue", alpha = 0.4, size = 0.8) +
-  
-  geom_line(aes(y = symptom_change_mon3*15), color = "blue", alpha = 0.4, size = 0.8, linetype = "dotdash") +
-  geom_point(aes(y = symptom_change_mon3*15), color = "blue", alpha = 0.4, size = 0.8) +
-  
+  geom_line(aes(group = participant, y = symptom_change*20), na.rm = TRUE, 
+            color = "blue", size = 1) + 
+  geom_point(aes(group = participant, y = symptom_change*20), na.rm = TRUE, 
+             color = "blue", size = 1.5) + 
   # Background rectangle
   geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),
             fill = "grey80", alpha = 0.10) + 
   scale_y_continuous(name = "Heart rate", limits = c(-50, 225),
-    sec.axis = sec_axis(~./20, name = "Change in severity scores", breaks = seq(-6,9,by = 3))) +
-  facet_wrap(~ participant, nrow = 3) +  # Assuming 12 participants, arrange them in 3 rows
+    sec.axis = sec_axis(~./20, name = "Change in severity scores", breaks = seq(-6,9,by = 1))) +
+  facet_wrap(~ participant, nrow = 2) +  # Assuming 12 participants, arrange them in 3 rows
   geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.10) + 
   theme(panel.grid.major = element_line(color = "grey"),
     panel.grid.major.y = element_blank(),
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "bottom", legend.key.size = unit(0.5, "cm"),
     axis.title.y.right = element_text(margin = margin(l = 10)),
-    text = element_text(size= 12),
+    text = element_text(size= 12, family = "Times New Roman"),
     panel.background = element_rect(fill = "white", color = "black")) +
-  labs(x = "Time Point", y = "Heart Rate", title = "Heart Rate Over Time for Aerobic Participants")
+  labs(x = "Time Point", y = "Heart Rate", title = "12-week mean heart rate and severity score change in aerobic participants") + 
+  geom_segment(aes(x = 0, xend = 8 , y = 60, yend = 60), size = 0.5, color = "black", linetype = "dashed")
+  
+
+ggplot(long_techs, aes(x = time_point, y = heart_rate_perc, group = participant)) +
+  # Main heart rate line (most pronounced)
+  geom_line(color = "#f57600", size = 1) +
+  geom_point(color = "#f57600", size = 1.5) + 
+  
+  # Main symptom change line (most pronounced)
+  geom_line(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
+            color = "blue", size = 1) + 
+  geom_point(aes(group = participant, y = symptom_change*15), na.rm = TRUE, 
+             color = "blue", size = 1.5) + 
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 100),
+    sec.axis = sec_axis(~./10, name = "Change in severity scores", breaks = seq(-6,9,by = 1))) +
+  facet_wrap(~ participant, nrow = 2) +  # Assuming 12 participants, arrange them in 3 rows
+  geom_rect(data = long_techs, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.10) + 
+  theme(panel.grid.major = element_line(color = "grey"),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom", legend.key.size = unit(0.5, "cm"),
+    axis.title.y.right = element_text(margin = margin(l = 10)),
+    text = element_text(size= 12, family = "Times New Roman"),
+    panel.background = element_rect(fill = "white", color = "black")) +
+  labs(x = "Time Point", y = "Max HR %", title = "12-week mean max HR % and severity score change in aerobic participants") + 
+  geom_segment(aes(x = 0, xend = 8 , y = 30, yend = 30), size = 0.5, color = "blue", linetype = "dashed")+
+   geom_segment(aes(x = 0, xend = 8 , y = 80, yend = 80), size = 0.5, color = "#f57600", linetype = "dashed")
+
+
+  
+#FIGURE 4
+
+long_techs_p <- long_techs |> dplyr::filter(participant %in% c("10", "11", "12", "19", "27", "34"))
+
+ggplot(long_techs_p, aes(x = time_point, y = heart_rate, group = participant)) +
+  # Main heart rate line (most pronounced)
+
+  # Additional heart rate averages (more transparent)
+  geom_line(aes(y = heart_rate_mon1), color = "#DC2C25", alpha = 0.6, size = 0.8, linetype = "dashed") +
+  geom_point(aes(y = heart_rate_mon1), color = "#DC2C25", alpha = 0.6, size = 0.8) +
+  
+  geom_line(aes(y = heart_rate_mon2), color = "#39631C", alpha = 0.8, size = 0.8, linetype = "dotted") +
+  geom_point(aes(y = heart_rate_mon2), color = "#39631C", alpha = 0.8, size = 0.8) +
+  
+  geom_line(aes(y = heart_rate_mon3), color = "#07509B", alpha = 0.6, size = 0.8, linetype = "dotdash") +
+  geom_point(aes(y = heart_rate_mon3), color = "#07509B", alpha = 0.6, size = 0.8) +
+  
+  # Additional symptom change averages (more transparent, scaled by 15)
+  geom_line(aes(y = symptom_change_mon1*20), color = "#DC2C25", alpha = 0.6, size = 0.8, linetype = "dashed") +
+  geom_point(aes(y = symptom_change_mon1*20), color = "#DC2C25", alpha = 0.6, size = 0.8) +
+  
+  geom_line(aes(y = symptom_change_mon2*20), color = "#39631C", alpha = 0.8, size = 0.8, linetype = "dotted") +
+  geom_point(aes(y = symptom_change_mon2*20), color = "#39631C", alpha = 0.8, size = 0.8) +
+  
+  geom_line(aes(y = symptom_change_mon3*20), color = "#07509B", alpha = 0.6, size = 0.8, linetype = "dotdash") +
+  geom_point(aes(y = symptom_change_mon3*20), color = "#07509B", alpha = 0.6, size = 0.8) +
+  
+  # Background rectangle
+  geom_rect(data = long_techs_p, aes(xmin = 0, xmax = 7, ymin = maxhr_65, ymax = maxhr_80),
+            fill = "grey80", alpha = 0.10) + 
+  scale_y_continuous(name = "Heart rate", limits = c(-50, 225),
+    sec.axis = sec_axis(~./20, name = "Change in severity scores", breaks = seq(-6,9,by = 1))) +
+  facet_wrap(~ participant, nrow = 1) +  # Assuming 12 participants, arrange them in 3 rows
+  geom_rect(data = long_techs_p, aes(xmin = 0, xmax = 8, ymin = maxhr_65, ymax = maxhr_80),fill = "grey80", alpha = 0.10) + 
+  theme(panel.grid.major = element_line(color = "grey"),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom", legend.key.size = unit(0.5, "cm"),
+    axis.title.y.right = element_text(margin = margin(l = 10)),
+    text = element_text(size= 12, family = "Times New Roman"),
+    panel.background = element_rect(fill = "white", color = "black")) +
+  labs(x = "Time Point", y = "Heart Rate", title = "
+  Monthly mean heart rate and severity score change for aerobic 
+  participants significantly over HR threshold or symptomatic within first month") + 
+   geom_segment(aes(x = 0, xend = 8 , y = 60, yend = 60), size = 0.5, color = "black", linetype = "dashed")
 
 ```
 
@@ -796,13 +896,115 @@ ggplot(prop_df, aes(x = Category, y = Proportion)) +
 ```
 
 
-## Heart rate and symptom severity correlation in int
+
 ```{r}
-spearman <- long_techs |> 
-  group_by(participant) |>
-summarize(correlation = cor(heart_rate, severity_score, method = "spearman", use = "complete.obs"),
-          p_value = cor.test(heart_rate, severity_score, method = "spearman")$p.value)
+long_techs1.1 <- Techs_athl_set %>%
+gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+
+long_techs1.2 <- Techs_fit_set %>%
+gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+
+long_techs1.3 <- Techs_age_set %>%
+gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+
+long_techs1.4 <- Techs_tbi_set %>%
+gather(key = "time_point", value = "heart_rate", baseline, min05, min10, min15, min20, min25, min30)
+
+
+
+
+
+```
+
+
+
+
+## Heart rate and symptom severity correlation and linear mixed effects model
+```{r}
+
+spearman <- long_techs %>% filter(time_point %in% c("min05", "min10", "min15", "min20", "min25")) |> group_by(participant)|>
+summarize(correlation = cor(heart_rate_mon3, symptom_change_mon3, method = "spearman", use = "complete.obs"),
+          p_value = cor.test(heart_rate_mon3, symptom_change_mon3, method = "spearman")$p.value)
 
 spearman
+
+
+
+Techs_athl_set <- Techs_age_set |> filter(age == 1)
+Techs_athl_set <- Techs_athl_set |> filter(randomization_group == 0)
+
+Techs_long_hr <- Techs_athl_set %>%
+  dplyr::select(participant, matches("baseline_hr_int1_.*") & !contains("hr_max"), matches("hr_.*_int1_d5") & !contains("hr_max")) %>%
+  pivot_longer(cols = -participant,
+               names_to = "time",
+               values_to = "HR")
+                
+Techs_long_symp <- Techs_athl_set %>%
+  dplyr::select(participant,matches(".*_cif_int.*")) %>%
+  pivot_longer(cols = -participant,
+               names_to = "times",
+               values_to = "symptoms")|>
+    dplyr::select(symptoms)
+                
+Techs_long <- bind_cols(Techs_long_hr, Techs_long_symp)
+
+
+Techs_long <- Techs_long %>%
+  mutate(
+    intervention = case_when(
+      grepl("baseline_hr_int1_d5_d\\d+", time) ~ as.numeric(gsub("baseline_hr_int1_d5_d(\\d+)", "\\1", time)),
+      grepl("hr_\\d+_int1_d5_d\\d+", time) ~ as.numeric(gsub("hr_\\d+_int1_d5_d(\\d+)", "\\1", time)),
+      grepl("hr_.*_int1_d5", time) ~ 1,
+      grepl("baseline_hr_int1_d5", time) ~ 1,
+      TRUE ~ NA_real_
+    ),
+    collection = case_when(
+      grepl("baseline_hr_int1_d5_.*", time) ~ 0,
+      grepl("hr_\\d+_int1_d5.*", time) ~ as.numeric(gsub("hr_(\\d+)_int1_d5.*", "\\1", time)),
+      TRUE ~ NA_real_
+    ),
+   month = case_when(
+  intervention >= 1 & intervention <= 12 ~ 1,
+  intervention >= 13 & intervention <= 24 ~ 2,
+  intervention >= 25 & intervention <= 36 ~ 3,
+  TRUE ~ NA_real_
+)) |>
+      dplyr::select(-time)
+
+techs_lme1 <- lmerTest::lmer(symptoms ~ HR*month + collection + (1+ month|participant), data = Techs_long)
+
+summary(techs_lme1)
+
+tab_model(techs_lme1, digits = 3, digits.re = 3, show.df = TRUE, df.method = "satterthwaite")
+
+cor.test(Techs_athl_set$baseline_vig_and_mod, Techs_athl_set$relative_vo2max_agecorrected_baseline)
+
+confint(techs_lme1)
+
+eta_squared(techs_lme1)
+
+standardize(techs_lme1)
+
+
+
+anova(techs_lme,techs_lme1)
+
+jn_intervals <- probe_interaction(techs_lme1, 
+                                 pred = HR, 
+                                 modx = intervention,   # Third variable
+                                 alpha = .05, 
+                                 ci = 0.95,plot.points = TRUE,size = 2, fdr = TRUE, se = TRUE)
+
+jn_intervals
+
+# Model with month as a random slope (your current model)
+techs_lme1 <- lmerTest::lmer(symptoms ~ HR*month + collection + (1 + month|participant), data = Techs_long)
+
+# Model with month as a covariate
+techs_lme2 <- lmerTest::lmer(symptoms ~ HR + month + collection + (1 + month|participant), data = Techs_long)
+
+# Compare the models using the anova() function
+anova(techs_lme1, techs_lme2)
+
 ```
 
