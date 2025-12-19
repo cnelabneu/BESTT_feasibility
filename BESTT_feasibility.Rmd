@@ -6,7 +6,9 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(root.dir = "/Users/nwakamma.m/Documents/R-code")
+#knitr::opts_chunk$set(root.dir = "/Users/nwakamma.m/Documents/R-code")
+
+knitr::opts_chunk$set(root.dir = "/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility")
 
 library(rlang)
 library(patchwork) 
@@ -20,8 +22,9 @@ library(tidyr)
 library(tableone)
 library(sjPlot)
 library(fmsb)
+library(interactions)
 
-Techs <- read_excel("/Users/nwakamma.m/Documents/R-code/BESTT_feasibility/techs_BESTT_final_data.xlsx")
+Techs <- read_excel("/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility/techs_BESTT_final_data.xlsx")
 #bestt_test <- read_excel("/Users/nwakamma.m/Documents/R-code/BESTT_feasibility/techs_BESTT_all.xlsx")
 ```
 
@@ -479,8 +482,8 @@ Techs$min30_numb_symps_mon3<- rowMeans(Techs[, c("numb_symps_6_int1_d25","numb_s
 
 
 ```{r} 
- #Techs <- Techs %>% 
-#dplyr::rename(participant = name)
+ Techs <- Techs %>% 
+dplyr::rename(participant = name)
 
  # 'active' vs 'non-active' based on ACSM PA recommendations
 Techs_athl_set <- Techs
@@ -929,17 +932,24 @@ summarize(correlation = cor(heart_rate_mon3, symptom_change_mon3, method = "spea
 spearman
 
 
+relative_vo2max_agecorrected_baseline 
+days_since_injury_calc
+baseline_vig_and_mod
 
-Techs_athl_set <- Techs_age_set |> filter(age == 1)
-Techs_athl_set <- Techs_athl_set |> filter(randomization_group == 0)
 
-Techs_long_hr <- Techs_athl_set %>%
-  dplyr::select(participant, matches("baseline_hr_int1_.*") & !contains("hr_max"), matches("hr_.*_int1_d5") & !contains("hr_max")) %>%
-  pivot_longer(cols = -participant,
+
+
+Techs_long <- Techs |> filter(randomization_group == 0) |> mutate(baseline_vig_and_mod = baseline_vig_min_per_day_pa + baseline_mod_min_pa)
+
+Techs_long_hr <- Techs_long %>%
+  dplyr::select(participant, relative_vo2max_agecorrected_baseline, age, days_since_injury_calc,baseline_vig_and_mod, 
+                matches("baseline_hr_int1_.*") & !contains("hr_max"), 
+                matches("hr_.*_int1_d5") & !contains("hr_max")) %>%
+  pivot_longer(cols = -c(participant, relative_vo2max_agecorrected_baseline, age, days_since_injury_calc,baseline_vig_and_mod),
                names_to = "time",
                values_to = "HR")
                 
-Techs_long_symp <- Techs_athl_set %>%
+Techs_long_symp <- Techs_long %>%
   dplyr::select(participant,matches(".*_cif_int.*")) %>%
   pivot_longer(cols = -participant,
                names_to = "times",
@@ -971,40 +981,27 @@ Techs_long <- Techs_long %>%
 )) |>
       dplyr::select(-time)
 
-techs_lme1 <- lmerTest::lmer(symptoms ~ HR*month + collection + (1+ month|participant), data = Techs_long)
+techs_lme <- lmerTest::lmer(symptoms ~ HR*month + (1 + month|participant:collection),data = Techs_long)
 
-summary(techs_lme1)
+summary(techs_lme)
 
-tab_model(techs_lme1, digits = 3, digits.re = 3, show.df = TRUE, df.method = "satterthwaite")
+tab_model(techs_lme, digits = 4, digits.re = 4, show.df = TRUE, df.method = "satterthwaite")
 
 cor.test(Techs_athl_set$baseline_vig_and_mod, Techs_athl_set$relative_vo2max_agecorrected_baseline)
 
-confint(techs_lme1)
-
-eta_squared(techs_lme1)
-
-standardize(techs_lme1)
-
-
-
 anova(techs_lme,techs_lme1)
 
-jn_intervals <- probe_interaction(techs_lme1, 
+jn_intervals <- probe_interaction(techs_lme, 
                                  pred = HR, 
-                                 modx = intervention,   # Third variable
+                                 modx = month,   # Third variable
                                  alpha = .05, 
-                                 ci = 0.95,plot.points = TRUE,size = 2, fdr = TRUE, se = TRUE)
+                                 ci = 0.95,plot.points = TRUE,size = 4, fdr = TRUE, se = TRUE)
 
-jn_intervals
+print(jn_intervals, digits = 6)
 
-# Model with month as a random slope (your current model)
-techs_lme1 <- lmerTest::lmer(symptoms ~ HR*month + collection + (1 + month|participant), data = Techs_long)
-
-# Model with month as a covariate
-techs_lme2 <- lmerTest::lmer(symptoms ~ HR + month + collection + (1 + month|participant), data = Techs_long)
 
 # Compare the models using the anova() function
 anova(techs_lme1, techs_lme2)
-
+dkdfnalk
 ```
-
+ 
