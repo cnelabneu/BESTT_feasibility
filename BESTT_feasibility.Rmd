@@ -12,7 +12,7 @@ knitr::opts_chunk$set(root.dir = "/Users/marknwakamma/Documents/code_manuscripts
 
 library(rlang)
 library(patchwork) 
-library(ggplot2)
+library(ggplot2) 
 library(tidyverse)
 library(dplyr)
 library(psych)
