@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(root.dir = "/Users/nwakamma.m/Documents/R-code")
+##knitr::opts_chunk$set(root.dir = "/Users/nwakamma.m/Documents/R-code")
 
 knitr::opts_chunk$set(root.dir = "/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility")
 
