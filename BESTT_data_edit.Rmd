@@ -8,8 +8,12 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-setwd('/Users/nwakamma.m/Documents/EEG data/TECHS/TECHS_DATA_2025-09-08_1700.xlsx')
-techs <- read_excel("/Users/nwakamma.m/Documents/EEG data/TECHS//TECHS_DATA_2025-09-08_1700.xlsx")
+setwd('/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility')
+techs <- read_excel("techs_BESTT_final_data.xlsx")
+
+library(dplyr)
+library(tidyr)
+library(stringr)
 
 ```
 
@@ -79,5 +83,50 @@ techs <- techs %>% mutate(
   bestt_numb_symps_12 =rowSums(.[, selected_cols[5:26]] > 0, na.rm = TRUE))
 
 writexl::write_xlsx(techs, "techs_BESTT_all2.xlsx")
+```
+
+
+## Get symptom count of participants with increase in positive correlations over time
+```{r}
+# Explicit list of symptom names (as they appear in column names)
+symptom_names <- c("headache", "neck", "dizziness_vomiting", "pressure",
+                    "blurred_vision", "balance_problems", "light_sensitive",
+                    "noise_sensitive", "slow", "fog", "feel_right",
+                    "concentration", "remembering", "fatigue", "confusion",
+                    "drowsiness", "emotional", "irritability", "sleep",
+                    "sad", "anxiety", "nausea")
+
+# Build a regex that only matches columns starting with one of these symptom names
+symptom_pattern <- paste0("^(", paste(symptom_names, collapse = "|"), ")_[1-6]_int1_d5_d[0-9]+$")
+
+symptom_cols <- names(techs)[str_detect(names(techs), symptom_pattern)]
+
+# Pivot to long format and extract symptom name + session number from column names
+long_symptoms <- techs %>%
+  filter(name %in% c("techs_12", "techs_36", "techs_37")) %>%  # update to your actual participant identifiers
+  dplyr::select(name, all_of(symptom_cols)) %>%
+  pivot_longer(cols = -name, names_to = "col", values_to = "value") %>%
+  mutate(
+    symptom = str_extract(col, "^.+(?=_[1-6]_int1_d5_d[0-9]+$)"),
+    session = as.numeric(str_extract(col, "(?<=_d)[0-9]+$"))
+  )
+
+# Flag whether a symptom was recorded (value > 0) at ANY of the 6 increments within a session
+session_flags <- long_symptoms %>%
+  group_by(name, symptom, session) %>%
+  summarize(recorded = any(value > 0, na.rm = TRUE), .groups = "drop")
+
+# Count how many of the 36 sessions each symptom was recorded in, per participant
+symptom_session_counts <- session_flags %>%
+  group_by(name, symptom) %>%
+  summarize(times_recorded = sum(recorded), .groups = "drop")
+
+# Pivot to wide format: participants as rows, symptoms as columns
+symptom_summary_wide <- symptom_session_counts %>%
+  pivot_wider(names_from = name, values_from = times_recorded, values_fill = 0)
+
+symptom_summary_wide
+
+writexl::write_xlsx(symptom_summary_wide, "driving_symptoms2.xlsx")
 ```
 
