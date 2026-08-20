@@ -25,6 +25,7 @@ library(fmsb)
 library(interactions)
 library(ppcor)
 library(cocor)
+library(table1)
 
 Techs <- read_excel("/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility/techs_BESTT_final_data.xlsx")
 bestt_test <- read_excel("/Users/marknwakamma/Documents/code_manuscripts/BESTT_feasibility/techs_BESTT_final_data.xlsx")
@@ -566,17 +567,134 @@ long_techs_sub <- long_techs_sub[long_techs_sub$relative_vo2max_agecorrected_bas
 
 ```
 
+##Demographic data for those with complete EEG data 
+
+```{r}
+
+bestt_test$randomization_group<- factor(bestt_test$randomization_group,
+                                         levels = c(0, 1),
+                                         labels = c("Exercise", "Balance"))
+
+bestt_test$ethnicity_factor <- factor(bestt_test$ethnicity,
+                                         levels = c(0,1),
+                                         labels = c("Hispanic or Latino", "NOT Hispanic or Latino"))
+
+bestt_test$race_factor <- factor(bestt_test$race,
+                                         levels = c(1,4,5),
+                                         labels = c("Asian", "White", "Mixed Race"))
+
+bestt_test$sex_factor <- factor(bestt_test$sex,
+                                         levels = c(0, 1),
+                                         labels = c("Female", "Male"))
+
+bestt_test$annual_income_factor <- factor(bestt_test$annual_income,
+                          levels = 0:9,
+                          labels = c("$0-$20,000", "$20,000-$40,000", "$40,000-$60,000", "$60,000-$80,000", "$80,000-$100,000", "$100,000-$120,000","$120,000-$140,000", "$140,000-$160,000", "$160,000-$180,000","$180,000-$200,000"))
+
+bestt_test$years_of_ed_factor <- factor(bestt_test$years_of_ed,
+                        levels = 11:21,
+                        labels = c("12 years", "13 years", "14 years", "15 years","16 years", "17 years", "18 years", "19 years", "20 years", "21 years", "22+ years"))
+    
+bestt_test$handedness_factor = factor(bestt_test$handedness,
+                       levels = 0:1,
+                       labels = c("Right", "Left"))
+    
+bestt_test$adhd_factor = factor(bestt_test$adhd,
+                 levels = 0:1,
+                 labels = c("No", "Yes"))
+    
+bestt_test$injury_cause = factor(bestt_test$injury_cause,
+                     levels = 0:3,
+                     labels = c("Fall", "Direct blow to head", "Sport-related","Motor vehicle accident"))
+
+label(bestt_test$randomization_group_factor) <- "Treatment Group"
+label(bestt_test$age) <- "Age (years)"
+label(bestt_test$ethnicity_factor) <- "Ethnicity"
+label(bestt_test$race_factor) <- "Race"
+label(bestt_test$sex_factor) <- "Biological Sex"
+label(bestt_test$annual_income_factor) <- "Annual Income"
+label(bestt_test$years_of_ed_factor) <- "Years of Education"
+label(bestt_test$handedness_factor) <- "Handedness"
+label(bestt_test$adhd_factor) <- "ADHD Diagnosis"
+label(bestt_test$injury_cause) <- "Cause of Injury"
+label(bestt_test$days_since_injury_calc) <- "# of Days Since Injury"
+label(bestt_test$number_injury) <- "# of Prior TBIs"
+label(bestt_test$total_met) <- "Total MET (International Physical Activity Questionnaire)"
+label(bestt_test$adherence) <- "Adherence (%)"
+
+
+demographic_formula <- ~ age  + race_factor + sex_factor + injury_cause + days_since_injury_calc + number_injury + adherence | randomization_group
+
+# Generate Table 1 stratified by Randomization
+demographic_table <- table1(demographic_formula, data = bestt_test)
+
+# Print the table
+demographic_table
+
+```
 
 ## Demographics table
 ```{r}
 
-# Demographics using tableone function
-# sex was manually accounted for
-vars <- c("age", "years_of_ed", "days_since_injury", "num_symp_baseline")
-group_vars <- "group"
-demo_table <- CreateTableOne(vars = vars, data = Techs, addOverall = TRUE)
+# Use to get confidence intervals from between-group demographic differences
+demo_table <- Techs %>%
+  select(randomization_group, age, ethnicity, race, sex, annual_income,
+         years_of_ed, handedness, adhd, injury_cause, total_met,
+         days_since_injury_calc, number_injury, adherence) %>%
+  tbl_summary(
+    by = randomization_group,
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})",
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    digits = all_continuous() ~ 1,
+    label = list(
+      age ~ "Age (years)",
+      ethnicity ~ "Ethnicity",
+      race ~ "Race",
+      sex ~ "Biological Sex",
+      annual_income ~ "Annual Income",
+      years_of_ed ~ "Years of Education",
+      handedness ~ "Handedness",
+      adhd ~ "ADHD Diagnosis",
+      injury_cause ~ "Cause of Injury",
+      total_met ~ "Total MET",
+      days_since_injury_calc ~ "Days Since Injury",
+      number_injury ~ "Prior TBIs",
+      adherence ~ "Adherence (%)"
+    ),
+    missing = "no"
+  ) %>%
+  add_difference(
+    estimate_fun = list(
+      all_continuous() ~ function(x) style_sigfig(x, digits = 2),
+      all_categorical() ~ function(x) style_sigfig(x, digits = 2)
+    )
+  ) %>%
+  modify_column_merge(
+    pattern = "{conf.low}, {conf.high}",
+    rows = !is.na(estimate)
+  ) %>%
+  add_overall() %>%
+  bold_labels() %>%
+  modify_header(
+    estimate ~ "**Difference**",
+    conf.low ~ "**95% CI**"  # Changed from ci to conf.low
+  )
 
-print(demo_table)
+demo_table
+
+
+# Use LM to get between group differences for each continuous variable
+model <- lm(number_injury ~ randomization_group, data = bestt_test)
+summary(model)
+confint(model)
+
+# Use chi-square test to get between group differences each categorical variable
+fisher.test(table(bestt_test$sex, bestt_test$randomization_group))
+
+chisq.test(bestt_test$sex, bestt_test$randomization_group)
+
 ```
 
 ## Baseline symptom distribution
@@ -1081,7 +1199,7 @@ comparison
 ```
 
 
-## Adherence x symptom severity
+## Adherence x symptom severity scores
 ```{r}
 techs_lm <- lm(symptoms ~ adherence,data = Techs_long)
 
@@ -1090,7 +1208,7 @@ summary(techs_lm)
 ggplot(data = Techs_long, aes(x = adherence, y = symptoms)) + 
   geom_point() + 
   geom_smooth(method = "lm") +
-  labs(x = "Adherence % rate", y = "Symptoms severity") +
+  labs(x = "Adherence % rate", y = "Symptoms severity scores") +
   theme_classic()
 ```
  
