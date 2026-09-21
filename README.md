@@ -1,2 +1,3 @@
 # BESTT_feasibility
-Boston Exercise Symptom Threshold Test
+24 participants having been diagnosed with mild traumatic brain injury (mTBI) underwent a modified exertional bike test to help threshold subsequent aerobic exercise sessions over the course of 12 weeks. This analysis was performed to 1) test the ability of this test to individualize moderate aerobic exercise without exacerbating mTBI-like symptoms, 2) To explore whether the strength of the exercise-symptom relationship changes over time with more exposure to exercise and 3) To investigate whether known confounding variables of mTBI change the overall effect of the exercise-symptom relationship over time with more exposure to exercise.
+
